@@ -14,6 +14,7 @@ guides (e.g., would be supressed if we DASHed with a library
 consisting of guides)
 
 #+BEGIN_SRC python :tangle score_guides/score_guides.py
+#!/usr/bin/env python3
 import sys
 
 if __name__ == '__main__':
@@ -52,6 +53,7 @@ if __name__ == '__main__':
 #+END_SRC
 
 ** Guide scoring for original DASH dataset
+This section runs =score_guides.py= on a set of DASHed and un-DASHed to compare how the automated guide design performed.
 
 #+NAME: base_path
 /Users/dynerman/work/special_ops_crispr_tools/data
