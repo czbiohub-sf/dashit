@@ -68,7 +68,7 @@ func printUsage() {
 }
 
 func main() {
-    if len(os.Args) < 4 {
+	if len(os.Args) < 4 {
         os.Stderr.WriteString("Error: Not enough input arguments\n")
         printUsage()
         os.Exit(-1);
@@ -102,7 +102,6 @@ func main() {
 
             readsStr = readsStr[1:]
 
-            //reads := make([]int, 0, len(readsStr))
             reads := make([]int, 0)
 			i := 0
 			for _, rStr := range readsStr {
@@ -120,8 +119,6 @@ func main() {
 
 				if readExists == false {
 					reads = append(reads, r)
-                    // reads = reads[:i+1]
-					//reads[i] = r
 					i = i + 1
 					if r > maxRead {
 						maxRead = r
@@ -144,7 +141,7 @@ func main() {
 
         update_counts(guidesToReads, coverage, counts, coverageNum)
 
-        guides, readsCovered := cover_reads_greedy(guidesToReads, coverage, counts, numSites, coverageNum)
+        guides, readsCovered := coverReadsGreedy(guidesToReads, coverage, counts, numSites, coverageNum)
 
         fmt.Printf("Site, Site index, Number of reads covered by site, cumulative number of reads covered\n");
 
@@ -152,17 +149,12 @@ func main() {
         
 		cumulativeReadsCovered := 0
         for i, g := range guides {
-            for guidesToReads[g]
-
             cumulativeReadsCovered += readsCovered[i]
-            
-            
             fmt.Printf("%s, %d, %d, %d\n", sites[g], g, readsCovered[i], cumulativeReadsCovered);
         }
 
         fmt.Fprintf(os.Stderr, "%d sites covered %d reads, # reads: %d\n", numSites, cumulativeReadsCovered, maxRead)
     }
-
 
     os.Stderr.Sync()
 }
