@@ -1,0 +1,90 @@
+#+TITLE: DASHit: automated guide design
+#+AUTHOR: David Dynerman, Emily Crawford, Hanna Retallack, Giana Cirolia
+#+EMAIL: david.dynerman@czbiohub.org
+#+INFOJS_OPT: view:t toc:nil ltoc:nil mouse:underline buttons:0 path:http://thomasf.github.io/solarized-css/org-info.min.js
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="http://thomasf.github.io/solarized-css/solarized-light.min.css" />
+
+* Guide design from reads (e.g., from a FASTQ file)
+*Note:* =dashit= is installed and ready to use on a server. Please read [[*dashit server][dashit server]] to learn how to connect. If necessary, we can also install =dashit= locally on your laptops.
+
+The following runs through automated guide design on
+=NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fastq=, assuming that this
+file has been placed in =/scratch/example/= on the dashit server.
+
+   1. Convert input FASTQ -> FASTA
+      #+BEGIN_SRC bash
+seqtk seq -A /scratch/example/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fastq > /scratch/example/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fasta 
+      #+end_SRC
+   2. Run =crispr_sites= to build a map of crispr sites->reads in which they appear
+      #+BEGIN_SRC bash
+cat /scratch/example/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fasta | crispr_sites > /scratch/example/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_sites_to_reads.txt
+      #+END_SRC
+      The format of =NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_sites_to_reads.txt= is
+      #+BEGIN_EXAMPLE
+AAAAAAAAAAAAAAAAAGAC    13109137 4177172 6275108 12688285 ... 
+      #+END_EXAMPLE
+      The first column is a crispr site that was found, the remaining
+      numbers on the line are the indices of the reads in which that
+      crispr site appears. The read index is just the order of the
+      read in the input FASTA file.
+   3. Run =optimize_guides= to find the list of guides that best covers the input
+      #+BEGIN_SRC bash
+optimize_guides /scratch/example/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_sites_to_reads.txt 100 > /scratch/example/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv
+      #+END_SRC
+      The integer parameter =100= specifies how many guides to create.
+
+** Scoring automated guide design
+=score_guides.py= compares a list of guides against a FASTQ file and computes how many reads are hit by the guides.
+
+To run =score_guides.py= just give it the =_sites_to_reads.txt= file and the =_guides.csv= files from an [[*Guide design from reads (e.g., from a FASTQ file)][automated guide design.]] Continuing the example from above,
+
+#+BEGIN_SRC bash
+score_guides.py /scratch/example/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_sites_to_reads.txt /scratch/example/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv 
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+These guides will hit 7005294/16617695 = 42% reads, 0 guides hit no reads
+#+END_EXAMPLE
+
+
+* Guide design by specifying targets
+
+#+BEGIN_SRC python
+import flash
+from common import Gene
+from Bio import SeqIO
+
+# Read in genes that we'll design guides for
+def read_genes_from_file(filename):
+    sequences = SeqIO.parse(open(filename), 'fasta')
+
+    for sequence in sequences:
+        
+
+#+END_SRC
+
+
+
+
+* dashit server
+David has setup an EC2 instance we can use for guide design that has
+all the =dashit= software pre-installed. For now this makes
+things easier by not requiring you to install development packages on
+your local machines.  If running dashit remotely becomes too annoying,
+then talk to David about getting dashit setup on your local machine.
+
+** Connecting
+1. Get an SSH key =id_dashit= from David, and place it in =~/.ssh/=
+2. SSH in
+   #+BEGIN_SRC bash
+   ssh -i ~/.ssh/id_dashit dashit@ec2-13-56-188-6.us-west-1.compute.amazonaws.com
+   #+END_SRC
+
+** Storage
+The =/home/dashit= home directory is on a small 8GB partition used for
+the operating system. A 500 GB partition is mounted as =/scratch=, so
+use that for your =FASTQ=, etc files.
+
+You can:
+1. Upload input files to =/scratch= directly, or,
+2. Run =aws cp= on the dashit server to copy directly from S3.

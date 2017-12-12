@@ -21,7 +21,7 @@ if __name__ == '__main__':
     
     with open(sites_filename, 'r') as sites_file:
         for line in sites_file.readlines()[1:]:
-            site = line.split()[0][:-1]
+            site = line.split(',')[0].strip(' ')
 
             if site not in sites_to_reads:
                 useless_guides.append(site)
@@ -32,5 +32,7 @@ if __name__ == '__main__':
                     reads_covered[read] += 1
                 else:
                     reads_covered[read] = 1
-          
-    print("These guides will hit {}/{} = {:2.2g}% reads, {} guides hit no reads".format(len(reads_covered.keys()), largest_read_idx, len(reads_covered.keys())/largest_read_idx * 100, len(useless_guides)))
+
+
+    total_reads_hit = sum([reads_covered[read] for read in reads_covered.keys()])
+    print("{} will hit {}/{} = {:2.2g}% reads in {}, {} guides hit no reads".format(sites_filename, len(reads_covered.keys()), largest_read_idx, len(reads_covered.keys())/largest_read_idx * 100, sites_to_reads_filename, len(useless_guides)))

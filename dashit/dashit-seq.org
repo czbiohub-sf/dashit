@@ -1,0 +1,845 @@
+# -*- org-confirm-babel-evaluate: nil; -*-
+#+TITLE: DASHit-seq
+#+AUTHOR: David Dynerman
+#+EMAIL: david.dynerman@czbiohub.org
+#+OPTIONS: toc:nil
+#+PROPERTY: header-args:python :tangle "src/dashit-seq.py" :noweb yes
+#+PROPERTY: header-args:org :exports results :results replace
+
+* DASHit-seq
+#+NAME: doc:dashit-seq
+#+BEGIN_SRC org
+DASHit-seq: Guide design by covering an input sequence.
+
+Given an input sequence and off targets, create a DASH library by
+optimally covering the input while avoiding off targets.
+
+,*Optimally* means:
+1. guides are chosen to reasonably cover the input, e.g. every 200bp
+2. guides aren't spaced too closely, e.g. no closer than 50bp
+#+END_SRC
+
+#+BEGIN_SRC python :exports none
+"""
+<<doc:dashit-seq>>
+"""
+import argparse
+import flash
+import pysam
+import logging
+import os
+import subprocess
+import fcntl
+import time
+import filter_offtarget
+import sys
+
+from Bio import SeqIO
+from Bio import SeqRecord
+from Bio.Seq import Seq
+from ortools.linear_solver import pywraplp
+from common import Gene, Target
+from pathlib import Path
+from build import fetch_with_retries
+
+from collections import defaultdict
+
+from jinja2 import Environment, FileSystemLoader
+
+log = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+#+END_SRC
+
+** Guide optimization
+Once CRISPR sites that match off-targets have been removed, we want to
+choose the smallest number of guides that cover the input sequence,
+without bunching up or being spaced too far apart.
+
+We formulate this as an integer programming problem. Suppose that we
+want to build a guide library using a set of $N$ CRISPR guides. We
+will use the binary variables $x_1, \ldots, x_N$, where $x_i = 1$ if
+CRISPR guide $i$ is selected for the library and $x_i = 0$ if not.
+
+Our goal will be to minimize the number of guides chosen, 
+
+\[
+\min \sum_{i= 1}^N x_i, \tag{1}\label{objective}
+\]
+
+subject to covering the input sequence and not bunching guides too closely.
+
+To avoid bunching guides too closely, we add constraints
+
+\[
+x_i + x_j \leq 1 \tag{2}\label{min_con}
+\]
+
+whenever the minimum distance between any target location for guide
+$i$ and any target location for guide $j$ is less than a specified
+minimum distance.
+
+To ensure that the chosen guides cover the input sequence, Josh
+suggests sliding a window of a specified width (e.g., 200bp) across
+the input sequence. If guides $x_{w_1}, \ldots, x_{w_k}$ have target locations within some such window we add the constraint
+
+\[
+x_{w_1} + \ldots + x_{w_k} \geq 1. \tag{3}\label{max_con}
+\]
+
+*** =initialize_solver=
+#+NAME: doc:initialize_solver
+#+BEGIN_SRC org
+Creates & initializes a solver object for guide optimization.
+#+END_SRC
+
+#+BEGIN_SRC python
+def initialize_solver(sequences, filtered_sites):
+    """
+    <<doc:initialize_solver>>
+
+    Parameters
+    ----------
+    sequences : list of `Gene`
+        input sequences that we're designing guides format
+    filtered_sites : dict
+        CRISPR sites to ignore in optimization (e.g., offtargets)
+
+    Returns
+    -------
+    (`ortools.linear_solver.pywraplp.Solver`, dict, dict)
+
+    The initialized solver object, a dictionary mapping CRISPR sites
+    to optimization variables, a dictionary mapping CRISPR sites to
+    targets within the input sequence.
+
+    Note: This method does not add any constraints. See `add_constraints`.
+    """
+
+    solver = pywraplp.Solver('SolveIntegerProblem',
+                             pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
+
+    objective = solver.Objective()
+#+END_SRC
+
+A =Gene= object contains a list of CRISPR targets =[(guide sequence,
+location)]=, but a single CRISPR sequence can appear multiple times in
+this list (if a single sequence hits at multiple locations). Since we
+want one optimization variable $x_i$ per CRISPR sequence, we need to
+unique-ify the the target list.
+
+#+BEGIN_SRC python
+    sites_to_targets = defaultdict(list)
+
+    for gene in sequences:
+        for target_seq, target_loc in gene.targets:
+            if target_seq in filtered_sites:
+                continue
+            if target_seq not in sites_to_targets:
+                sites_to_targets[target_seq].append((gene, (target_seq,
+                                                            target_loc)))
+
+    site_variables = {}
+#+END_SRC
+
+Now we can create the optimization variables and set the minimization objective, as Equation $\eqref{objective}$.
+#+BEGIN_SRC python
+    for i, target_seq in enumerate(sites_to_targets):
+        if target_seq in filtered_sites:
+            continue
+        site_variables[target_seq] = solver.IntVar(0, 1, 'x_{}'.format(i))
+        objective.SetCoefficient(site_variables[target_seq], 1)
+
+    objective.SetMinimization()    
+
+    return solver, site_variables, sites_to_targets
+#+END_SRC
+
+
+*** =add_spacing_constraints=
+#+NAME: doc:add_spacing_constraints
+#+BEGIN_SRC org
+Add minimum & maximum separation constraints to cover sequences
+without bunching up.
+
+Adds constraints to the provided solver instance.
+#+END_SRC
+
+#+BEGIN_SRC python
+def add_spacing_constraints(sequences, solver, site_variables, filtered_sites,
+                            min_spacing, max_spacing):
+    """
+    <<doc:add_spacing_constraints>>
+
+    Parameters
+    ----------
+    sequences : list of `Gene`
+        sequences we wish to cover with CRISPR sites
+    solver : `ortools.linear_solver.pywraplp.Solver`
+        initialized solver, as returned from `initialize_solver`
+    site_variables : list
+        optimization solver variables, as returned from `initialize_solver`
+    filtered_sites : dict
+        CRISPR sites that should be ignored for optimization, e.g. offtargets
+    min_spacing, max_spacing : int
+        ensure at least `min_spacing` between selected guides, and
+        ensure that at least one guide appears in every window of
+        width `max_spacing`
+
+    Returns
+    -------
+    (spacing_constraints, coverage_constraints) : tuple of set
+
+    `spacing_constraints`, ensuring minimum spacing, and
+    `coverage_constraints` ensuring the target sequence is covered
+
+    This method already adds these constraints to `solver`, but the
+    return value is useful for debugging.
+    """
+    
+    # Rather than have fancy logic below to ensure we add each
+    # constraint only once, we're lazy and rely on set() to uniquefy
+    # our list of constraints
+    coverage_constraints = set()
+    spacing_constraints = set()
+
+    for sequence in sequences:
+        for i, (seq, cut_loc) in enumerate(sequence.targets):
+            if seq in filtered_sites:
+                continue
+            
+            nearby_targets = [ s for s, l in sequence.targets if l != cut_loc and
+                               not (s in filtered_sites) and
+                               abs(l - cut_loc) < min_spacing ]
+        
+            if len(nearby_targets) > 0:
+                spacing_constraints.add(tuple(s for s in
+                                              nearby_targets + [seq]))
+
+            nearby_targets = [ s for s, l in sequence.targets if l != cut_loc and
+                               not (s in filtered_sites) and
+                               abs(l - cut_loc) < max_spacing ]
+        
+            if len(nearby_targets) > 0:
+                coverage_constraints.add(tuple(s for s in
+                                               nearby_targets + [seq]))
+#+END_SRC
+Add constraints according to Equation $\eqref{min_con}$.
+#+BEGIN_SRC python
+    for constraint in spacing_constraints:
+        new_constraint = solver.Constraint(0, 1)
+        for site in constraint:
+            new_constraint.SetCoefficient(site_variables[site], 1)
+#+END_SRC
+Add constraints according to Equation $\eqref{max_con}$.
+#+BEGIN_SRC python
+    for constraint in coverage_constraints:
+        new_constraint = solver.Constraint(1, solver.Infinity())
+        for site in constraint:
+            new_constraint.SetCoefficient(site_variables[site], 1)
+            
+    return spacing_constraints, coverage_constraints    
+#+END_SRC
+
+
+** Filter CRISPR sites
+Before picking optimal CRISPR sites to cover the input sequences, we
+first eliminate (filter) certain sites from consideration. Sites are
+removed if they match specified off-targets, or if they have poor
+structure.
+
+*** =filter_sites_offtarget=
+#+NAME: doc:filter_sites_offtarget
+#+BEGIN_SRC org
+Takes a list of sequences with identified CRISPR targets and filters
+those that are offtarget.
+
+This function adds off target CRISPR sites to =filtered_sites=.
+#+END_SRC
+
+#+BEGIN_SRC python
+def filter_sites_offtarget(sequences, filtered_sites):
+    """
+    <<doc:filter_sites_offtarget>>
+
+    Parameters
+    ----------
+    sequences : list of `common.Gene`
+        the input sequences with CRISPR sites identified
+    filtered_sites : dict
+        dict containing which sites have been filtered	
+    """
+
+    log.info('filtering offtarget CRISPR sites from {} input '
+             'sequences'.format(len(sequences)))
+
+    # We may have duplicates in this list, if a single CRISPR site
+    # occurs multiple times in the input sequences
+    all_targets = []
+    
+    for sequence in sequences:
+        for target in sequence.targets:
+            all_targets.append(target[0])
+#+END_SRC
+
+The second argument to =filter_offtarget.fetch_all_offtargets=
+specifies what /radius/ to search for off target matches. The radius
+is specified as a triple of integers =L_J_K=, where $L, J, K$ are the
+numbers of matches required in the first 5, 10 and 20 letters of the
+site, respectively, to be declared an offtarget. So a radius of
+=5_10_20= requires a perfect match, =5_10_19= allows one mismatch in
+the last 10 letters of the site, etc.
+
+#+BEGIN_SRC python
+    results = filter_offtarget.fetch_all_offtargets(all_targets, ['5_10_20'])
+
+    offtargets = parse_offtarget_server_response(results)
+
+    log.info('removed {} sites from consideration because they hit off '
+             'targets'.format(len(offtargets)))
+
+    for site in offtargets:
+        filtered_sites[site] = "offtarget"
+#+END_SRC
+
+
+
+
+*** =filter_sites_poor_structure=
+#+NAME: doc:filter_sites_poor_structure
+#+BEGIN_SRC org 
+Filter CRISPR sites due to poor structural reasons.
+
+A site will be removed if any of the following are true:
+
+1. G/C frequency too high (> 15/20) or too low (< 5/20)
+2. /Homopolymer/: more than 5 consecutive repeated nucleotides
+3. /Dinucleotide repeats/: the same two nucelotides alternate for > 3
+   repeats
+4. /Hairpin/: complementary subsequences near the start and end of a
+   site can bind, causing a hairpin
+#+END_SRC
+
+#+BEGIN_SRC python
+def filter_sites_poor_structure(sequences, filtered_sites):
+    """
+    <<doc:filter_sites_poor_structure>>
+
+    Parameters
+    ----------
+    sequences : list of `common.Gene`
+        the input sequences with CRISPR targets identified
+    filtered_sites : dict
+        dict containing which sites have been filtered	
+    """
+
+    log.info('filtering sites for poor structure')
+
+    initial_num_filtered = len(filtered_sites)
+    
+    for sequence in sequences:
+        for target in sequence.targets:
+            reasons = flash.poor_structure(target[0], True)
+            if len(reasons) > 0:
+                filtered_sites[target[0]] = "; ".join(reasons)
+
+    log.info('removed {} sites from consideration due to poor '
+             'structure'.format(len(filtered_sites) - initial_num_filtered))
+#+END_SRC
+
+*** =offtarget= server
+We use [[https://github.com/czbiohub/special_ops_crispr_tools/tree/master/offtarget][special_ops_crispr_tools/offtarget]] to filter off target CRISPR
+sites. =offtarget= is a server that responds to HTTP queries asking
+"is this CRISPR site off-target?"
+
+This section takes care of automatically starting and running the
+=offtarget= server.
+
+**** =parse_offtarget_server_response=
+The =special_ops_crispr_tools/offtarget= server returns an HTTP request with the off targets matches formatted like this:
+
+#+BEGIN_EXAMPLE
+'AAAAAAAAAAAAAAAAAAAA true\nGGGGGGGGGGGGGGGGGGGG false\nACTAGCCCCAATTTACGTCT false\n'
+#+END_EXAMPLE
+
+Here the sites are the CRISPR sites we asked about, and the text
+=true= and =false= indicates whether or not the site matched an
+offtarget.
+
+#+NAME: doc:parse_offtarget_server_response
+#+BEGIN_SRC org
+Parse the HTTP request returned from the off target server and return
+which CRISPR sites were filtered.
+#+END_SRC
+
+#+BEGIN_SRC python
+def parse_offtarget_server_response(response):
+    """
+    <<doc:parse_offtarget_server_response>>
+
+    Parameters
+    ----------
+    response : dict
+        response from offtarget server, as returned by
+        `filter_offtarget.fetch_all_offtargets`
+
+    Returns
+    -------
+    offtargets : defaultdict
+
+    dictionary where `offtargets[site] == True` if `site` is an
+    offtarget
+    """
+
+    offtargets = defaultdict(bool)
+    
+    for radius in response:
+        for r in response[radius]:
+            for line in r.text.split('\n'):
+                if line[-4:] == 'true':
+                    offtargets[line[0:20]] = True
+
+    return offtargets
+#+END_SRC
+
+**** TODO Move =parse_offtarget_server_response= into some kind of special_ops offtarget filtering library, e.g. with the rest of the code from =build.py=, =filter_offtarget.py=, etc
+
+**** =launch_offtarget_server=
+#+NAME: doc:launch_offtarget_server
+#+BEGIN_SRC org
+Launch the off target filtering server.
+#+END_SRC
+
+#+BEGIN_SRC python
+def launch_offtarget_server(offtarget_filename):
+    """
+    <<doc:launch_offtarget_server>>
+
+    Parameters
+    ----------
+    offtarget_filename : str
+        filename containing off target CRISPR sites, as generated by
+        `special_ops_crispr_tools/crispr_sites`
+
+    Returns
+    -------
+    `subprocess.Popen` the off target server launched as a child process
+    """
+
+    offtarget_env = os.environ.copy()
+    offtarget_env['HOST'] = 'file://' + str(Path(offtarget_filename).resolve())
+
+    log.info('Launching offtarget with HOST = {}'.format(offtarget_env['HOST']))
+    
+    proc = subprocess.Popen(['./offtarget'], env=offtarget_env)
+
+    proc = check_offtarget_alive(proc)
+
+    if proc is None:
+        log.error('Error launching offtarget. Is offtarget in your path? '
+                  'Is {} an off target CRISPR sites file generated by '
+		  'crispr_sites?'.format(Path(offtarget_filename).resolve()))
+
+    # Set the offtarget's  stdout and stderr to  non-blocking reads so
+    # we can check in on them
+    # fd = proc.stderr.fileno()
+    # fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+    # fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+
+    # fd = proc.stdout.fileno()
+    # fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+    # fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+        
+    return proc
+#+END_SRC
+
+**** =check_offtarget_alive=
+#+NAME: doc:check_offtarget_alive
+#+BEGIN_SRC org
+Check that the offtarget server process is running. Log errors if not.
+#+END_SRC
+
+#+BEGIN_SRC python
+def check_offtarget_alive(offtarget_proc):
+    """
+    <<doc:check_offtarget_alive>>
+
+    Parameters
+    ----------
+    offtarget_proc : `subprocess.Popen`
+        offtarget server process, as returned by `launch_offtarget_server`
+
+    Returns
+    -------
+    `subprocess.Popen`
+
+    Returns `offtarget_proc` if the process is running, else return `None`
+    """
+
+    if offtarget_proc is None:
+        return None
+    
+    if offtarget_proc.poll() is not None:
+        log.error('offtarget server exited unexpectedly with code '
+                  '{}\n\n'.format(offtarget_proc.returncode))
+        
+        # outs, errs = offtarget_proc.communicate()
+        # log.error('off_target stdout:\n\n{}\n\n'.format(outs.decode()))
+        # log.error('off_target stderr:\n\n{}\n\n'.format(errs.decode()))
+        
+        return None
+    else:
+        return offtarget_proc
+#+END_SRC
+
+**** =check_offtarget_ready=
+#+NAME: doc:check_offtarget_ready
+#+BEGIN_SRC org
+Check that the offtarget server is ready and waiting for requests.
+#+END_SRC
+
+#+BEGIN_SRC python
+def check_offtarget_ready(offtarget_proc):
+    """
+    <<doc:check_offtarget_ready>>
+
+    Parameters
+    ----------
+    offtarget_proc : `subprocess.Popen`
+        offtarget server process, as returned by `launch_offtarget_server`
+
+    Returns
+    -------
+    bool or None
+
+    True if offtarget server is ready, False if offtarget server is
+    still starting, None if `offtarget_proc` died or is None
+    """
+
+    offtarget_proc = check_offtarget_alive(offtarget_proc)
+    
+    if offtarget_proc is None:
+        return None
+
+    while True:
+        line = offtarget_proc.stderr.readline()
+
+        if line != b'':
+            print(line)
+            if 'starting server' in line.decode():
+                log.info('offtarget server ready and waiting')
+                # Disable the subprocess' STDOUT and STDERR to prevent
+                # it from deadlocking by writing too much to stdout
+                # that doesn't get read
+                return True
+        else:
+            break
+
+    return False
+#+END_SRC
+
+
+
+** Input/Output
+*** =read_sequences_from_file=
+#+NAME: doc:read_sequences_from_file
+#+BEGIN_SRC org
+Generate Gene objects from an input file and identify CRISPR targets.
+#+END_SRC
+
+#+BEGIN_SRC python
+def read_sequences_from_file(filename):
+    """
+    <<doc:read_sequences_from_file>>
+
+    Parameters
+    ----------
+    filename : str
+        input filename, FASTA format
+
+    Returns
+    -------
+    list of `Gene` objects, with identified CRISPR targets
+    """
+
+    input_sequences = SeqIO.parse(open(filename, 'r'), 'fasta')
+
+    sequences = []
+    
+    for sequence in input_sequences:
+        print(sequence.name)
+        new_sequence = Gene('hi')
+        new_sequence.seq = sequence.seq
+        new_sequence.targets = []
+           
+        for i in flash.kmers_range(new_sequence.seq, 23):
+            if 'G' == new_sequence.seq[i+21] == new_sequence.seq[i+22]:
+                new_sequence.targets.append(
+                    Target(flash.forward_20mer_at(new_sequence.seq, i, 'F'),
+                           flash.cut_location((i, 'F'))))
+            if 'C' == sequence.seq[i] == sequence.seq[i+1]:
+                new_sequence.targets.append(
+                    Target(flash.forward_20mer_at(new_sequence.seq, i, 'R'),
+                           flash.cut_location((i, 'R'))))
+
+        sequences.append(new_sequence)
+    return sequences
+#+END_SRC
+
+
+** Output report
+We output the designed guides as an HTML document to provide a bit
+more friendly way to interpret the data. We use [[http://jinja.pocoo.org/docs/2.10/templates/][a jinja2]] template
+together with [[http://getbootstrap.com][bootstrap 4.0]].
+
+#+BEGIN_SRC html :tangle src/templates/report.jinja2
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>DASHit-seq automated guide design</title>
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+
+
+<!-- <script src="stats.min.js"></script> -->
+
+<!-- <script src="data.js"></script> -->
+</head>
+<body>
+
+  <header>
+    <div class="container">
+      <div class="row">
+	<div class="col-lg-3">
+	  <img src="Biohub_2color.png" width="200px">
+	</div>
+	<div class="col-lg-9">
+	  <h2>DASHit-seq: automated guide design from sequences</h2>
+	</div>
+      </div>
+      <div class="row">
+	<div class="col-lg-3 offset-lg-3">
+	  <p class="lead">Input sequences:</p>
+	</div>
+	<div class="col-lg-6">
+	  <p class="lead"><pre>{{ input_sequences }}</pre></p>
+	</div>
+      </div>
+      <div class="row">
+	<div class="col-lg-3 offset-lg-3">
+	  <p class="lead">Off targets:</p>
+	</div>
+	<div class="col-lg-6">
+	  <p class="lead"><pre>{{ off_targets }}</pre></p>
+	</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-3" style="height: 600px; overflow-y: scroll;">
+	<div class="row">
+	  <h3>Guide Library</h3>
+	</div>
+
+	<table class="table table-striped">
+	  <thead>
+	    <tr>
+	      <th scope="col">Guide</th>
+	    </tr>
+	  </thead>
+	  <tbody>
+	    {% for item in guides %}
+	    <tr>
+	      <td><pre>{{ item }}</pre></td>
+	    </tr>
+	    {% endfor %}
+	  </tbody>
+	</table>
+      </div>
+      <div class="col-lg-8 offset-lg-1" style="height: 600px; overflow-y: scroll;">
+	<div class="row">
+	  <h3>Filtered sites</h3>
+	</div>
+
+	<table class="table table-striped">
+	  <thead>
+	    <tr>
+	      <th scope="col">Site</th>
+	      <th scope="col">Filtered because...</th>
+	    </tr>
+	  </thead>
+	  <tbody>
+	    {% for item in unused_sites %}
+	    <tr>
+	      <td><pre>{{ item[0] }}</pre></td>
+	      <td>{{ item[1] }}</td>
+	    </tr>
+	    {% endfor %}
+	  </tbody>
+	</table>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+  <div id="pileup"></div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+  <script>window.jQuery || document.write('<script src="../../../../assets/js/vendor/jquery-slim.min.js"><\/script>')</script>
+  <script src="popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+  <script src="pileup.js"></script>
+  <script type="text/javascript">
+    var div = document.getElementById('pileup');
+    var p = pileup.create(div, {
+    range: {contig: 'RN45s', start: {{ reference_start }}, stop: {{ reference_stop }}},
+    tracks: [
+    {
+    viz: pileup.viz.genome(),
+    isReference: true,
+    data: pileup.formats.twoBit({
+    url: './reference.2bit'
+    }),
+    name: 'Reference'
+    },
+    {
+    viz: pileup.viz.pileup(),
+    data: pileup.formats.bam({
+    url: './guides.bam',
+    indexUrl: './guides.bam.bai'
+    }),
+    cssClass: 'normal',
+    name: 'Alignments'
+    }
+    ]
+    });
+  </script>
+</body>
+</html>
+#+END_SRC
+
+** Command line interface
+#+BEGIN_SRC python
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Guide design by covering an '
+                                     'input sequence')
+
+    parser.add_argument('input', type=str, help='input sequence to cover with '
+                        'guides, FASTA format')
+
+    parser.add_argument('--min_spacing', type=int, default=50,
+                        help='Space guides no closer than this')
+
+    parser.add_argument('--max_spacing', type=int, default=200,
+                        help='Ensure at least one guide in every window of '
+                        'this size')
+
+    parser.add_argument('--offtarget', type=str,
+                        help='File containing off target CRISPR sites, as generated by '
+                        'crispr_sites')
+
+    
+    
+
+    args = parser.parse_args()
+
+    if args.offtarget is not None:
+        offtarget_proc = launch_offtarget_server(args.offtarget)
+    else:
+        offtarget_proc = None
+        
+    input_sequences = read_sequences_from_file(args.input)
+
+    # Check/wait that offtarget server has started
+    try:
+        log.info("Poking offtarget server.  Timeout 30 seconds.")
+        fetch_with_retries(["ACGT" * 5], 5, 9, 18, max_attempts=5, timeout=30)
+        log.info("Offtarget server is alive.")
+    except:
+        traceback.print_exc()
+        log.error('Offtarget server not ready, see traceback above')
+        sys.exit(-1)
+
+    # This dictionary contains CRISPR sites that will be disregarded
+    # during guide optimization, e.g. because they hit offtargets
+    filtered_sites = {}
+
+    filter_sites_offtarget(input_sequences, filtered_sites)
+
+    log.info('Done with offtarget server, shutting it down')
+    offtarget_proc.terminate()
+
+    filter_sites_poor_structure(input_sequences, filtered_sites)
+    
+    solver, site_variables, sites_to_targets = initialize_solver(input_sequences, filtered_sites)
+
+    constraints = add_spacing_constraints(input_sequences, solver,
+                                          site_variables, filtered_sites,
+                                          args.min_spacing,
+                                          args.max_spacing)
+
+    result_status = solver.Solve()
+
+    library = []
+
+    for site in site_variables:
+        if site_variables[site].solution_value() == 1:
+            library.append(site)
+    
+    if (result_status == pywraplp.Solver.OPTIMAL or
+        result_status == pywraplp.Solve.FEASIBLE):
+
+        env = Environment(loader=FileSystemLoader('templates'))
+        template = env.get_template('report.jinja2')
+
+        output_html = template.render(guides=library,
+                                      unused_sites=[(s,
+                                                     filtered_sites[s])
+                                                    for s in
+                                                    filtered_sites],
+                                      input_sequences=args.input,
+                                      off_targets=args.offtarget,
+                                      reference_start=1,
+                                      reference_stop=len(input_sequences[0].seq))
+
+        with open('guides.html', 'w') as output_file:
+            output_file.write(output_html)
+        
+        # # Output a BAM file with the CRISPR targets as aligned
+        # # sequences for visualization
+        header = { 'HD': {'VN':'1.0'}, 'SQ': [{'LN': len(input_sequences[0].seq), 'SN': 'what'}]}
+        
+        with pysam.AlignmentFile("guides.bam", "wb", header=header) as output_file:
+            for i, site in enumerate(library):
+                for target in sites_to_targets[site]:
+                    a = pysam.AlignedSegment()
+                    a.query_name = 'Guide {}'.format(i)
+                    a.query_sequence = site
+                    #a.flag = 99
+                    a.reference_id = 0
+                    a.reference_start = target[1][1] - 17
+                    #a.reference_start = 0
+                    #print(a.reference_start)
+                    a.cigar = ((0, 20),)
+
+                    #a.next_reference_id = 0
+                    #a.next_reference_start=199
+                    #a.template_length = 20            
+                    #a.query_qualities = pysam.qualitystring_to_array("<<<<<<<<<<<<<<<<<<<<")
+                    if i < 5:
+                        output_file.write(a)
+
+        print('Optimal solution')
+        for site in library:
+            print(site)
+        
+
+    elif result_status == pywraplp.Solve.FEASIBLE:
+        print('Feasible sub-optimal gide')
+        for site in library:
+            print(site)
+    else:
+        print('No optimal solution found')
+#+END_SRC

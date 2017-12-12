@@ -37,7 +37,7 @@ if __name__ == '__main__':
     
     with open(sites_filename, 'r') as sites_file:
         for line in sites_file.readlines()[1:]:
-            site = line.split()[0][:-1]
+            site = line.split(',')[0].strip(' ')
 
             if site not in sites_to_reads:
                 useless_guides.append(site)
@@ -48,8 +48,10 @@ if __name__ == '__main__':
                     reads_covered[read] += 1
                 else:
                     reads_covered[read] = 1
-          
-    print("These guides will hit {}/{} = {:2.2g}% reads, {} guides hit no reads".format(len(reads_covered.keys()), largest_read_idx, len(reads_covered.keys())/largest_read_idx * 100, len(useless_guides)))
+
+
+    total_reads_hit = sum([reads_covered[read] for read in reads_covered.keys()])
+    print("{} will hit {}/{} = {:2.2g}% reads in {}, {} guides hit no reads".format(sites_filename, len(reads_covered.keys()), largest_read_idx, len(reads_covered.keys())/largest_read_idx * 100, sites_to_reads_filename, len(useless_guides)))
 #+END_SRC
 
 ** Guide scoring for original DASH dataset
@@ -196,3 +198,59 @@ return 'dash_hits.png'
 [[file:dash_hits.png]]
 
 
+
+* =compare_guides.py=
+
+#+BEGIN_SRC python :tangle compare_guides/compare_guides.py
+import sys
+import os
+
+def diff_guide_files(guide_l_name, guide_r_name):
+    guides_l = []
+
+    with open('../../../dashit_data/filt_99_99_99W_H2O_S14_RR1_guides.csv', 'r') as guides_file:
+        for line in guides_file.readlines()[1:]:
+            guides_l.append(line.split()[0][:-1])
+
+    guides_r = []
+        
+    with open('../../../dashit_data/W_H2O_S14_R1_001_guides.csv', 'r') as guides_file:
+        for line in guides_file.readlines()[1:]:
+            guides_r.append(line.split()[0][:-1])
+
+    intersection = set(guides_l) & set(guides_r)
+
+    guides_l_unique = set(guides_l) - intersection
+
+    guides_r_unique = set(guides_r) - intersection
+
+    return intersection, guides_l_unique, guides_r_unique
+
+if __name__ == '__main__':
+    if len(sys.argv) < 3:
+        sys.stderr.write('Usage: python compare_guides.py guide_file_l.csv guide_file_r.csv\n')
+        sys.exit(1)
+
+    intersection, guides_l_unique, guides_r_unique = diff_guide_files(sys.argv[1], sys.argv[1])
+
+    short_l_name = os.path.split(sys.argv[1])[-1]
+    short_r_name = os.path.split(sys.argv[2])[-1]
+    
+    print('Guides common to {} and {}:'.format(short_l_name, short_r_name))
+    for guide in intersection:
+        print('\t{}'.format(guide))
+
+    print('\n\nGuides only in {}'.format(short_l_name))
+    for guide in guides_l_unique:
+        print('\t{}'.format(guide))
+
+    print('\n\nGuides only in {}'.format(short_r_name))
+    for guide in guides_r_unique:
+        print('\t{}'.format(guide))
+    
+    print('\n\nNumber of guides in common: \t\t\t{}'.format(len(intersection)))
+    print('Number of guides in {} and not in {}: \t\t\t{}'.format(short_l_name, short_r_name, len(guides_l_unique)))
+    print('Number of guides in {} and not in {}: \t\t\t{}'.format(short_r_name, short_l_name, len(guides_r_unique)))    
+
+
+#+END_SRC
