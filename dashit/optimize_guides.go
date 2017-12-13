@@ -166,10 +166,8 @@ func main() {
 		
 		if len(readsFile) > 0 {
 			// collect a random read for each guide we've designed
-			fmt.Fprintf(os.Stderr, "Reads we'll print:\n")
 			for i, g := range guides {
 				guideIdxToReadIdx[i] = guidesToReads[g][rand.Intn(len(guidesToReads[g]))]
-				fmt.Fprintf(os.Stderr, "%d\n", guideIdxToReadIdx[i])
 			}
 
 			// Now we'll find the reads we chose in the specified
@@ -203,7 +201,7 @@ func main() {
 
 				if i == sortedReads[nextReadIdx] {
 					nextReadIdx += 1
-					readIdxToSeq[i] = record.Seq.String()
+					readIdxToSeq[i] = fmt.Sprintf("%s", record.Seq.Seq)
 					
 					if nextReadIdx >= numSites {
 						break
