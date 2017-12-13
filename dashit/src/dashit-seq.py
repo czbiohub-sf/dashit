@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 DASHit-seq: Guide design by covering an input sequence.
 

@@ -20,6 +20,7 @@ optimally covering the input while avoiding off targets.
 #+END_SRC
 
 #+BEGIN_SRC python :exports none
+#!/usr/bin/env python3
 """
 <<doc:dashit-seq>>
 """
