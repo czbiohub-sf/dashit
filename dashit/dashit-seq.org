@@ -435,7 +435,7 @@ def launch_offtarget_server(offtarget_filename):
 
     log.info('Launching offtarget with HOST = {}'.format(offtarget_env['HOST']))
     
-    proc = subprocess.Popen(['./offtarget'], env=offtarget_env)
+    proc = subprocess.Popen(['/usr/bin/env', 'offtarget'], env=offtarget_env)
 
     proc = check_offtarget_alive(proc)
 
