@@ -2,11 +2,22 @@ package main
 
 import (
     "bufio"
+	"io"
     "os"
     "fmt"
     "strings"
     "strconv"
+	"math/rand"
+	"sort"
+	"github.com/shenwei356/bio/seqio/fastx"
 )
+
+func checkError(err error) {
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
 
 func updateCounts(guidesToReads [][]int, coverage []int, counts []int, coverageNum int) {
     for guideIdx, guide := range guidesToReads {
@@ -64,7 +75,7 @@ func coverReadsGreedy(guidesToReads [][]int, coverage []int, counts []int, maxGu
 }
 
 func printUsage() {
-    os.Stderr.WriteString("go run optimize_guides.go [input sites -> reads map] [number of crispr sites to return] [number of times to cover each read]\n")
+    os.Stderr.WriteString("go run optimize_guides.go [input sites -> reads map] [number of crispr sites to return] [number of times to cover each read] [optional: reads file to output representative reads along with guides]\n")
 }
 
 func main() {
@@ -77,7 +88,14 @@ func main() {
     inputFilename := os.Args[1]
     numSites, _ := strconv.Atoi(os.Args[2])
     coverageNum, _ := strconv.Atoi(os.Args[3])
-    
+
+	// optionally specify reads file
+	var readsFile string = ""
+
+	if len(os.Args) == 5 {
+		readsFile = os.Args[4]
+	}
+	
     fmt.Fprintf(os.Stderr, "Choosing the %d sites from %s that will cover the most reads...\n", numSites, inputFilename)
 
     if file, err := os.Open(inputFilename); err == nil {
@@ -139,18 +157,76 @@ func main() {
         coverage := make([]int, maxRead + 1)
         counts := make([]int, len(guidesToReads))
 
-        update_counts(guidesToReads, coverage, counts, coverageNum)
+        updateCounts(guidesToReads, coverage, counts, coverageNum)
 
         guides, readsCovered := coverReadsGreedy(guidesToReads, coverage, counts, numSites, coverageNum)
 
-        fmt.Printf("Site, Site index, Number of reads covered by site, cumulative number of reads covered\n");
+		readIdxToSeq := make(map[int] string)
+		guideIdxToReadIdx := make([]int, numSites)
+		
+		if len(readsFile) > 0 {
+			// collect a random read for each guide we've designed
+			fmt.Fprintf(os.Stderr, "Reads we'll print:\n")
+			for i, g := range guides {
+				guideIdxToReadIdx[i] = guidesToReads[g][rand.Intn(len(guidesToReads[g]))]
+				fmt.Fprintf(os.Stderr, "%d\n", guideIdxToReadIdx[i])
+			}
 
-        readsCovered := make([]int, 0)
-        
+			// Now we'll find the reads we chose in the specified
+			// input FASTA file. Since this can be a big file, we'll
+			// sort the read indices we need to lookup and find them
+			// sequentially
+			sortedReads := make([]int, len(guideIdxToReadIdx))
+			copy(sortedReads, guideIdxToReadIdx)
+			sort.Ints(sortedReads)
+
+			nextReadIdx := 0
+			
+			reader, err := fastx.NewDefaultReader(readsFile)
+
+			checkError(err)
+
+			// Reads in normally formatted fasta files (that begin
+			// with a >chromosome comment) are 1-indexed
+			i := 1
+				
+			for {
+				record, err := reader.Read()
+
+				if err != nil {
+					if err == io.EOF {
+						break
+					}
+					checkError(err)
+					break
+				}
+
+				if i == sortedReads[nextReadIdx] {
+					nextReadIdx += 1
+					readIdxToSeq[i] = record.Seq.String()
+					
+					if nextReadIdx >= numSites {
+						break
+					}
+				}
+
+				i += 1
+			}
+			
+			fmt.Printf("Site, Site index, Number of reads covered by site, cumulative number of reads covered, random read hit by this guide\n");
+		} else {
+			fmt.Printf("Site, Site index, Number of reads covered by site, cumulative number of reads covered\n");
+		}
+
 		cumulativeReadsCovered := 0
         for i, g := range guides {
             cumulativeReadsCovered += readsCovered[i]
-            fmt.Printf("%s, %d, %d, %d\n", sites[g], g, readsCovered[i], cumulativeReadsCovered);
+
+			if len(readsFile) > 0 {
+				fmt.Printf("%s, %d, %d, %d, %s\n", sites[g], g, readsCovered[i], cumulativeReadsCovered, readIdxToSeq[guideIdxToReadIdx[i]]);				
+			} else {
+				fmt.Printf("%s, %d, %d, %d\n", sites[g], g, readsCovered[i], cumulativeReadsCovered);				
+			}
         }
 
         fmt.Fprintf(os.Stderr, "%d sites covered %d reads, # reads: %d\n", numSites, cumulativeReadsCovered, maxRead)
@@ -158,3 +234,4 @@ func main() {
 
     os.Stderr.Sync()
 }
+
