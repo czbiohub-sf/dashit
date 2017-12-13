@@ -38,9 +38,8 @@ func updateCounts(guidesToReads [][]int, coverage []int, counts []int, coverageN
     }
 }
 
-func coverReadsGreedy(guidesToReads [][]int, coverage []int, counts []int, maxGuides int, coverageNum int) ([]int, []int) {
+func coverReadsGreedy(guidesToReads [][]int, coverage []int, counts []int, maxGuides int, coverageNum int) []int {
     guides := make([]int, maxGuides)
-    readsCovered := make([]int, maxGuides)
     
     for i := 0; i < maxGuides; i++ {
         // Greedy: Find guide with largest count
@@ -56,7 +55,6 @@ func coverReadsGreedy(guidesToReads [][]int, coverage []int, counts []int, maxGu
 
         // take this guide!
         guides[i] = maxCountIdx
-        readsCovered[i] = maxCount
         for _, read := range guidesToReads[maxCountIdx] {
             coverage[read] += 1
         }
@@ -71,7 +69,7 @@ func coverReadsGreedy(guidesToReads [][]int, coverage []int, counts []int, maxGu
         }
     }
 
-    return guides, readsCovered
+    return guides
 }
 
 func printUsage() {
@@ -159,8 +157,26 @@ func main() {
 
         updateCounts(guidesToReads, coverage, counts, coverageNum)
 
-        guides, readsCovered := coverReadsGreedy(guidesToReads, coverage, counts, numSites, coverageNum)
+        guides := coverReadsGreedy(guidesToReads, coverage, counts, numSites, coverageNum)
 
+		// build a cumulative sum of the number of reads covered as we
+		// cumsum, we don't want to count reads that previous guides
+		// have already hit
+
+		readsCovered := make(map[int] bool)
+		numReadsCovered := make([]int, numSites)
+
+		for i, g := range guides {
+			n := 0
+			for _, r := range guidesToReads[g] {
+				if readsCovered[r] == false {
+					n += 1
+					readsCovered[r] = true
+				}
+			}
+			numReadsCovered[i] = n
+		}
+		
 		readIdxToSeq := make(map[int] string)
 		guideIdxToReadIdx := make([]int, numSites)
 		
@@ -218,12 +234,12 @@ func main() {
 
 		cumulativeReadsCovered := 0
         for i, g := range guides {
-            cumulativeReadsCovered += readsCovered[i]
+            cumulativeReadsCovered += numReadsCovered[i]
 
 			if len(readsFile) > 0 {
-				fmt.Printf("%s, %d, %d, %d, %s\n", sites[g], g, readsCovered[i], cumulativeReadsCovered, readIdxToSeq[guideIdxToReadIdx[i]]);				
+				fmt.Printf("%s, %d, %d, %d, %s\n", sites[g], g, numReadsCovered[i], cumulativeReadsCovered, readIdxToSeq[guideIdxToReadIdx[i]]);				
 			} else {
-				fmt.Printf("%s, %d, %d, %d\n", sites[g], g, readsCovered[i], cumulativeReadsCovered);				
+				fmt.Printf("%s, %d, %d, %d\n", sites[g], g, numReadsCovered[i], cumulativeReadsCovered);				
 			}
         }
 
