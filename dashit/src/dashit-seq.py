@@ -1,27 +1,12 @@
-# -*- org-confirm-babel-evaluate: nil; -*-
-#+TITLE: DASHit-seq
-#+AUTHOR: David Dynerman
-#+EMAIL: david.dynerman@czbiohub.org
-#+OPTIONS: toc:nil
-#+PROPERTY: header-args:python :tangle "src/dashit-seq.py" :noweb yes
-#+PROPERTY: header-args:org :exports results :results replace
-
-* DASHit-seq
-#+NAME: doc:dashit-seq
-#+BEGIN_SRC org
+"""
 DASHit-seq: Guide design by covering an input sequence.
 
 Given an input sequence and off targets, create a DASH library by
 optimally covering the input while avoiding off targets.
 
-,*Optimally* means:
+*Optimally* means:
 1. guides are chosen to reasonably cover the input, e.g. every 200bp
 2. guides aren't spaced too closely, e.g. no closer than 50bp
-#+END_SRC
-
-#+BEGIN_SRC python :exports none
-"""
-<<doc:dashit-seq>>
 """
 import argparse
 import flash
@@ -52,54 +37,10 @@ __version__ = "1.0"
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
-#+END_SRC
 
-** Guide optimization
-Once CRISPR sites that match off-targets have been removed, we want to
-choose the smallest number of guides that cover the input sequence,
-without bunching up or being spaced too far apart.
-
-We formulate this as an integer programming problem. Suppose that we
-want to build a guide library using a set of $N$ CRISPR guides. We
-will use the binary variables $x_1, \ldots, x_N$, where $x_i = 1$ if
-CRISPR guide $i$ is selected for the library and $x_i = 0$ if not.
-
-Our goal will be to minimize the number of guides chosen, 
-
-\[
-\min \sum_{i= 1}^N x_i, \tag{1}\label{objective}
-\]
-
-subject to covering the input sequence and not bunching guides too closely.
-
-To avoid bunching guides too closely, we add constraints
-
-\[
-x_i + x_j \leq 1 \tag{2}\label{min_con}
-\]
-
-whenever the minimum distance between any target location for guide
-$i$ and any target location for guide $j$ is less than a specified
-minimum distance.
-
-To ensure that the chosen guides cover the input sequence, Josh
-suggests sliding a window of a specified width (e.g., 200bp) across
-the input sequence. If guides $x_{w_1}, \ldots, x_{w_k}$ have target locations within some such window we add the constraint
-
-\[
-x_{w_1} + \ldots + x_{w_k} \geq 1. \tag{3}\label{max_con}
-\]
-
-*** =initialize_solver=
-#+NAME: doc:initialize_solver
-#+BEGIN_SRC org
-Creates & initializes a solver object for guide optimization.
-#+END_SRC
-
-#+BEGIN_SRC python
 def initialize_solver(sequences, filtered_sites):
     """
-    <<doc:initialize_solver>>
+    Creates & initializes a solver object for guide optimization.
 
     Parameters
     ----------
@@ -123,15 +64,7 @@ def initialize_solver(sequences, filtered_sites):
                              pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
 
     objective = solver.Objective()
-#+END_SRC
 
-A =Gene= object contains a list of CRISPR targets =[(guide sequence,
-location)]=, but a single CRISPR sequence can appear multiple times in
-this list (if a single sequence hits at multiple locations). Since we
-want one optimization variable $x_i$ per CRISPR sequence, we need to
-unique-ify the the target list.
-
-#+BEGIN_SRC python
     sites_to_targets = defaultdict(list)
 
     for gene in sequences:
@@ -143,10 +76,7 @@ unique-ify the the target list.
                                                             target_loc)))
 
     site_variables = {}
-#+END_SRC
 
-Now we can create the optimization variables and set the minimization objective, as Equation $\eqref{objective}$.
-#+BEGIN_SRC python
     for i, target_seq in enumerate(sites_to_targets):
         if target_seq in filtered_sites:
             continue
@@ -156,23 +86,14 @@ Now we can create the optimization variables and set the minimization objective,
     objective.SetMinimization()    
 
     return solver, site_variables, sites_to_targets
-#+END_SRC
 
-
-*** =add_spacing_constraints=
-#+NAME: doc:add_spacing_constraints
-#+BEGIN_SRC org
-Add minimum & maximum separation constraints to cover sequences
-without bunching up.
-
-Adds constraints to the provided solver instance.
-#+END_SRC
-
-#+BEGIN_SRC python
 def add_spacing_constraints(sequences, solver, site_variables, filtered_sites,
                             min_spacing, max_spacing):
     """
-    <<doc:add_spacing_constraints>>
+    Add minimum & maximum separation constraints to cover sequences
+    without bunching up.
+    
+    Adds constraints to the provided solver instance.
 
     Parameters
     ----------
@@ -226,44 +147,25 @@ def add_spacing_constraints(sequences, solver, site_variables, filtered_sites,
             if len(nearby_targets) > 0:
                 coverage_constraints.add(tuple(s for s in
                                                nearby_targets + [seq]))
-#+END_SRC
-Add constraints according to Equation $\eqref{min_con}$.
-#+BEGIN_SRC python
+
     for constraint in spacing_constraints:
         new_constraint = solver.Constraint(0, 1)
         for site in constraint:
             new_constraint.SetCoefficient(site_variables[site], 1)
-#+END_SRC
-Add constraints according to Equation $\eqref{max_con}$.
-#+BEGIN_SRC python
+
     for constraint in coverage_constraints:
         new_constraint = solver.Constraint(1, solver.Infinity())
         for site in constraint:
             new_constraint.SetCoefficient(site_variables[site], 1)
             
-    return spacing_constraints, coverage_constraints    
-#+END_SRC
+    return spacing_constraints, coverage_constraints
 
-
-** Filter CRISPR sites
-Before picking optimal CRISPR sites to cover the input sequences, we
-first eliminate (filter) certain sites from consideration. Sites are
-removed if they match specified off-targets, or if they have poor
-structure.
-
-*** =filter_sites_offtarget=
-#+NAME: doc:filter_sites_offtarget
-#+BEGIN_SRC org
-Takes a list of sequences with identified CRISPR targets and filters
-those that are offtarget.
-
-This function adds off target CRISPR sites to =filtered_sites=.
-#+END_SRC
-
-#+BEGIN_SRC python
 def filter_sites_offtarget(sequences, filtered_sites):
     """
-    <<doc:filter_sites_offtarget>>
+    Takes a list of sequences with identified CRISPR targets and filters
+    those that are offtarget.
+    
+    This function adds off target CRISPR sites to =filtered_sites=.
 
     Parameters
     ----------
@@ -283,17 +185,7 @@ def filter_sites_offtarget(sequences, filtered_sites):
     for sequence in sequences:
         for target in sequence.targets:
             all_targets.append(target[0])
-#+END_SRC
 
-The second argument to =filter_offtarget.fetch_all_offtargets=
-specifies what /radius/ to search for off target matches. The radius
-is specified as a triple of integers =L_J_K=, where $L, J, K$ are the
-numbers of matches required in the first 5, 10 and 20 letters of the
-site, respectively, to be declared an offtarget. So a radius of
-=5_10_20= requires a perfect match, =5_10_19= allows one mismatch in
-the last 10 letters of the site, etc.
-
-#+BEGIN_SRC python
     results = filter_offtarget.fetch_all_offtargets(all_targets, ['5_10_20'])
 
     offtargets = parse_offtarget_server_response(results)
@@ -303,30 +195,19 @@ the last 10 letters of the site, etc.
 
     for site in offtargets:
         filtered_sites[site] = "offtarget"
-#+END_SRC
 
-
-
-
-*** =filter_sites_poor_structure=
-#+NAME: doc:filter_sites_poor_structure
-#+BEGIN_SRC org 
-Filter CRISPR sites due to poor structural reasons.
-
-A site will be removed if any of the following are true:
-
-1. G/C frequency too high (> 15/20) or too low (< 5/20)
-2. /Homopolymer/: more than 5 consecutive repeated nucleotides
-3. /Dinucleotide repeats/: the same two nucelotides alternate for > 3
-   repeats
-4. /Hairpin/: complementary subsequences near the start and end of a
-   site can bind, causing a hairpin
-#+END_SRC
-
-#+BEGIN_SRC python
 def filter_sites_poor_structure(sequences, filtered_sites):
     """
-    <<doc:filter_sites_poor_structure>>
+    Filter CRISPR sites due to poor structural reasons.
+    
+    A site will be removed if any of the following are true:
+    
+    1. G/C frequency too high (> 15/20) or too low (< 5/20)
+    2. /Homopolymer/: more than 5 consecutive repeated nucleotides
+    3. /Dinucleotide repeats/: the same two nucelotides alternate for > 3
+       repeats
+    4. /Hairpin/: complementary subsequences near the start and end of a
+       site can bind, causing a hairpin
 
     Parameters
     ----------
@@ -348,37 +229,11 @@ def filter_sites_poor_structure(sequences, filtered_sites):
 
     log.info('removed {} sites from consideration due to poor '
              'structure'.format(len(filtered_sites) - initial_num_filtered))
-#+END_SRC
 
-*** =offtarget= server
-We use [[https://github.com/czbiohub/special_ops_crispr_tools/tree/master/offtarget][special_ops_crispr_tools/offtarget]] to filter off target CRISPR
-sites. =offtarget= is a server that responds to HTTP queries asking
-"is this CRISPR site off-target?"
-
-This section takes care of automatically starting and running the
-=offtarget= server.
-
-**** =parse_offtarget_server_response=
-The =special_ops_crispr_tools/offtarget= server returns an HTTP request with the off targets matches formatted like this:
-
-#+BEGIN_EXAMPLE
-'AAAAAAAAAAAAAAAAAAAA true\nGGGGGGGGGGGGGGGGGGGG false\nACTAGCCCCAATTTACGTCT false\n'
-#+END_EXAMPLE
-
-Here the sites are the CRISPR sites we asked about, and the text
-=true= and =false= indicates whether or not the site matched an
-offtarget.
-
-#+NAME: doc:parse_offtarget_server_response
-#+BEGIN_SRC org
-Parse the HTTP request returned from the off target server and return
-which CRISPR sites were filtered.
-#+END_SRC
-
-#+BEGIN_SRC python
 def parse_offtarget_server_response(response):
     """
-    <<doc:parse_offtarget_server_response>>
+    Parse the HTTP request returned from the off target server and return
+    which CRISPR sites were filtered.
 
     Parameters
     ----------
@@ -403,20 +258,10 @@ def parse_offtarget_server_response(response):
                     offtargets[line[0:20]] = True
 
     return offtargets
-#+END_SRC
 
-**** TODO Move =parse_offtarget_server_response= into some kind of special_ops offtarget filtering library, e.g. with the rest of the code from =build.py=, =filter_offtarget.py=, etc
-
-**** =launch_offtarget_server=
-#+NAME: doc:launch_offtarget_server
-#+BEGIN_SRC org
-Launch the off target filtering server.
-#+END_SRC
-
-#+BEGIN_SRC python
 def launch_offtarget_server(offtarget_filename):
     """
-    <<doc:launch_offtarget_server>>
+    Launch the off target filtering server.
 
     Parameters
     ----------
@@ -454,18 +299,10 @@ def launch_offtarget_server(offtarget_filename):
     # fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
         
     return proc
-#+END_SRC
 
-**** =check_offtarget_alive=
-#+NAME: doc:check_offtarget_alive
-#+BEGIN_SRC org
-Check that the offtarget server process is running. Log errors if not.
-#+END_SRC
-
-#+BEGIN_SRC python
 def check_offtarget_alive(offtarget_proc):
     """
-    <<doc:check_offtarget_alive>>
+    Check that the offtarget server process is running. Log errors if not.
 
     Parameters
     ----------
@@ -493,18 +330,10 @@ def check_offtarget_alive(offtarget_proc):
         return None
     else:
         return offtarget_proc
-#+END_SRC
 
-**** =check_offtarget_ready=
-#+NAME: doc:check_offtarget_ready
-#+BEGIN_SRC org
-Check that the offtarget server is ready and waiting for requests.
-#+END_SRC
-
-#+BEGIN_SRC python
 def check_offtarget_ready(offtarget_proc):
     """
-    <<doc:check_offtarget_ready>>
+    Check that the offtarget server is ready and waiting for requests.
 
     Parameters
     ----------
@@ -539,21 +368,10 @@ def check_offtarget_ready(offtarget_proc):
             break
 
     return False
-#+END_SRC
 
-
-
-** Input/Output
-*** =read_sequences_from_file=
-#+NAME: doc:read_sequences_from_file
-#+BEGIN_SRC org
-Generate Gene objects from an input file and identify CRISPR targets.
-#+END_SRC
-
-#+BEGIN_SRC python
 def read_sequences_from_file(filename):
     """
-    <<doc:read_sequences_from_file>>
+    Generate Gene objects from an input file and identify CRISPR targets.
 
     Parameters
     ----------
@@ -587,11 +405,7 @@ def read_sequences_from_file(filename):
 
         sequences.append(new_sequence)
     return sequences
-#+END_SRC
 
-
-** Command line interface
-#+BEGIN_SRC python
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Guide design by covering an '
                                      'input sequence')
@@ -694,4 +508,3 @@ if __name__ == '__main__':
 
     else:
         print('Optimal solution could not be found')
-#+END_SRC
