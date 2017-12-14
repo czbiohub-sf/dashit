@@ -114,7 +114,7 @@ def fetch_with_retries(targets, c5, c10, c20, max_attempts=5, timeout=600):
             url = "http://localhost:8080/search?targets=%s&limits=%s"
             url = url % (",".join(map(str, targets)), ",".join(map(str, [c5, c10, c20])))
             return requests.get(url, timeout=timeout)
-        except ConnectionResetError:
+        except (ConnectionResetError, ConnectionError):
             failures += 1
             if failures > max_attempts:
                 raise

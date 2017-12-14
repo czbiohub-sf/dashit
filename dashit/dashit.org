@@ -1,23 +1,37 @@
 #+TITLE: DASHit: automated guide design
-#+AUTHOR: David Dynerman, Emily Crawford, Hanna Retallack, Giana Cirolia
+#+AUTHOR: David Dynerman
 #+EMAIL: david.dynerman@czbiohub.org
 #+INFOJS_OPT: view:t toc:nil ltoc:nil mouse:underline buttons:0 path:http://thomasf.github.io/solarized-css/org-info.min.js
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="http://thomasf.github.io/solarized-css/solarized-light.min.css" />
 
-* Guide design from reads (e.g., from a FASTQ file)
-*Note:* =dashit= is installed and ready to use on a server. Please read [[*dashit server][dashit server]] to learn how to connect. If necessary, we can also install =dashit= locally on your laptops.
+=DASHit= are programs for automated design of CRISPR guides. There are two main workflows,
+
+1. [[DASHit-reads][DASHit-reads: guide design from reads (e.g., from a FASTQ file),]] and,
+2. [[DASHit-seq][DASHit-seq: Guide design by specifying a target sequence]].
+
+*Note:* =DASHit= is installed and ready to use on a compute
+server. Please read [[server][DASHit server]] to learn how to connect. If
+necessary, we can also install =DASHit= locally on your laptops.
+
+* DASHit-reads: Guide design from reads (e.g., from a FASTQ file)
+<<DASHit-reads>>
+=DASHit-reads= designs CRISPR guides by analyzing the output of an NGS run. Guides are chosen to hit the largest possible number of reads in the input.
 
 The following runs through automated guide design on
 =NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fastq=, assuming that this
-file has been placed in =/scratch/example/= on the dashit server.
+file has been placed in =/scratch/example/= on the =DASHit= server.
 
+   1. [[server][Connect to]] =dashit.czbiohub.org= and enter the examples directory
+      #+BEGIN_SRC bash
+cd /scratch/example/DASHit-reads/ 
+      #+END_SRC
    1. Convert input FASTQ -> FASTA
       #+BEGIN_SRC bash
-seqtk seq -A /scratch/example/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fastq > /scratch/example/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fasta 
+seqtk seq -A NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fastq > NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fasta 
       #+end_SRC
    2. Run =crispr_sites= to build a map of crispr sites->reads in which they appear
       #+BEGIN_SRC bash
-cat /scratch/example/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fasta | crispr_sites > /scratch/example/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_sites_to_reads.txt
+cat NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fasta | crispr_sites > NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_sites_to_reads.txt
       #+END_SRC
       The format of =NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_sites_to_reads.txt= is
       #+BEGIN_EXAMPLE
@@ -29,55 +43,75 @@ AAAAAAAAAAAAAAAAAGAC    13109137 4177172 6275108 12688285 ...
       read in the input FASTA file.
    3. Run =optimize_guides= to find the list of guides that best covers the input
       #+BEGIN_SRC bash
-optimize_guides /scratch/example/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_sites_to_reads.txt 100 > /scratch/example/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv
+optimize_guides NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_sites_to_reads.txt 100 1 > NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv
       #+END_SRC
-      The integer parameter =100= specifies how many guides to create.
+      The integer parameter =100= specifies how many guides to create, and the integer parameter =1= specifies how many times to attempt to cover each read with CRISPR sites.
+
+      You can also optionally tell =optimize_guides= about the
+      original input FASTA file in which case it will also output a
+      random read hit by each site. This is useful to, for example,
+      BLAST the reads that are being hit and sanity check that the
+      guides are hitting what you think they're hitting.
+      #+BEGIN_SRC bash
+optimize_guides NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_sites_to_reads.txt 100 1 NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fasta > NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv
+      #+END_SRC
 
 ** Scoring automated guide design
 =score_guides.py= compares a list of guides against a FASTQ file and computes how many reads are hit by the guides.
 
-To run =score_guides.py= just give it the =_sites_to_reads.txt= file and the =_guides.csv= files from an [[*Guide design from reads (e.g., from a FASTQ file)][automated guide design.]] Continuing the example from above,
+To run =score_guides.py= just give it the =_sites_to_reads.txt= file and the =_guides.csv= files from an [[DASHit-reads][automated guide design.]] Continuing the example from above,
 
 #+BEGIN_SRC bash
-score_guides.py /scratch/example/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_sites_to_reads.txt /scratch/example/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv 
+score_guides.py NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_sites_to_reads.txt NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv 
 #+END_SRC
 
 #+BEGIN_EXAMPLE
-These guides will hit 7005294/16617695 = 42% reads, 0 guides hit no reads
+NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv will hit 7005294/16617695 = 42% reads in NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_sites_to_reads.txt, 0 guides hit no reads
 #+END_EXAMPLE
 
 
-* Guide design by specifying targets
+* DASHit-seq: Guide design by specifying a target sequence
+<<DASHit-seq>> 
+=DASHit-seq= designs CRISPR guides by trying to cover
+an input sequence with guides, subject to not spacing them too closely
+together or too far apart. Before being selected, the list of
+candidate guides is filtered down to remove guides for poor structural
+reasons and if they match a use specified list of off targets.
 
-#+BEGIN_SRC python
-import flash
-from common import Gene
-from Bio import SeqIO
+As an example, we re-run automated guide design on mouse RN45s, with
+off targets given by the mouse transcriptome (with RN45s removed).
 
-# Read in genes that we'll design guides for
-def read_genes_from_file(filename):
-    sequences = SeqIO.parse(open(filename), 'fasta')
+   1. [[server][Connect to]] =dashit.czbiohub.org= and enter the examples directory
+      #+BEGIN_SRC bash
+cd /scratch/example/DASHit-seq/ 
+      #+END_SRC
+   2. Run =DASHit-seq=, specifying the input mouse RN45s sequence and the off target mouse transcriptome (with RN45s removed)
+      #+BEGIN_SRC 
 
-    for sequence in sequences:
-        
-
-#+END_SRC
+      #+END_SRC
 
 
+** Generating an off target input file
 
 
-* dashit server
-David has setup an EC2 instance we can use for guide design that has
-all the =dashit= software pre-installed. For now this makes
-things easier by not requiring you to install development packages on
-your local machines.  If running dashit remotely becomes too annoying,
-then talk to David about getting dashit setup on your local machine.
+* DASHit server
+<<server>>
+David has setup =dashit.czbiohub.org=, an EC2 instance we can use for
+guide design that has all the =DASHit= software pre-installed. For now
+this makes things easier by not requiring you to install development
+packages on your local machines.  If running =DASHit= remotely becomes
+too annoying, then talk to David about getting =DASHit= setup on your
+local machine.
 
 ** Connecting
-1. Get an SSH key =id_dashit= from David, and place it in =~/.ssh/=
-2. SSH in
+1. Get an SSH key =id_dashit= from David or Emily, and place it in =~/.ssh/=
+2. Set the permissions on the SSH key appropriately
    #+BEGIN_SRC bash
-   ssh -i ~/.ssh/id_dashit dashit@ec2-13-56-188-6.us-west-1.compute.amazonaws.com
+   chmod 600 ~/.ssh/id_dashit
+   #+END_SRC
+3. SSH in
+   #+BEGIN_SRC bash
+   ssh -i ~/.ssh/id_dashit dashit@dashit.czbiohub.org
    #+END_SRC
 
 ** Storage
@@ -88,3 +122,4 @@ use that for your =FASTQ=, etc files.
 You can:
 1. Upload input files to =/scratch= directly, or,
 2. Run =aws cp= on the dashit server to copy directly from S3.
+   - To do this you'll need to setup your AWS credentials on =dashit.czbiohub.org= 

@@ -625,8 +625,8 @@ if __name__ == '__main__':
 
     # Check/wait that offtarget server has started
     try:
-        log.info("Poking offtarget server.  Timeout 30 seconds.")
-        fetch_with_retries(["ACGT" * 5], 5, 9, 18, max_attempts=5, timeout=30)
+        log.info("Poking offtarget server.  Timeout 10 seconds.")
+        fetch_with_retries(["ACGT" * 5], 5, 9, 18, max_attempts=5, timeout=10)
         log.info("Offtarget server is alive.")
     except:
         traceback.print_exc()
