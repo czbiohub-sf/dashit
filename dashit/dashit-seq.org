@@ -312,9 +312,6 @@ the last 10 letters of the site, etc.
         filtered_sites[site] = "offtarget"
 #+END_SRC
 
-
-
-
 *** =filter_sites_poor_structure=
 #+NAME: doc:filter_sites_poor_structure
 #+BEGIN_SRC org 
@@ -580,9 +577,13 @@ def read_sequences_from_file(filename):
 
     sequences = []
     
-    for sequence in input_sequences:
-        print(sequence.name)
-        new_sequence = Gene('hi')
+    for i, sequence in enumerate(input_sequences):
+        if i >= 1:
+            raise NotImplementedError('Input sequence file can only contain a '
+                                      'single sequence')
+        
+        new_sequence = Gene('Input Sequence {}'.format(i))
+        new_sequence.name = sequence.name
         new_sequence.seq = sequence.seq
         new_sequence.targets = []
            
@@ -766,6 +767,19 @@ if __name__ == '__main__':
         
         for site in filtered_sites:
             print('{}, {}'.format(site, filtered_sites[site]))
+
+        # Write a simple BED file showing where the library will hit
+        # the input sequence
+        base_name = os.path.splitext(os.path.split(args.input)[-1])[-2]
+        with open(base_name + '_guides.bed', 'w') as output:
+            for sequence in input_sequences:
+                for target in sequence.targets:
+                    if target[0] in library:
+                        output.write('{}\t{}\t{}\n'.format(sequence.name,
+                                                           target[1] - 17,
+                                                           target[1] + 3))
+            log.info('Wrote guide locations to {} for '
+                     'visualization'.format(base_name + '_guides.bed'))
 
     else:
         print('Optimal solution could not be found')
