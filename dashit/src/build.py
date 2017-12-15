@@ -120,7 +120,6 @@ def fetch_with_retries(targets, c5, c10, c20, max_attempts=5, timeout=600):
                 raise
             time.sleep(2 ** (failures + 5))
 
-
 def main():
     t = time.time()
     print("-------------------------------------------------------------------------------------")

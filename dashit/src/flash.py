@@ -13,29 +13,41 @@ def kmers(seq, k):
     for i in kmers_range(seq, k):
         yield (i, seq[i:i+k])
 
-def poor_structure(forward_kmer, need_explanation=False):
+def poor_structure(forward_kmer, need_explanation=False,
+                   parms={ 'gc_frequency': (5, 15),
+                           'homopolymer': 5,
+                           'dinucleotide_repeats': 3,
+                           'hairpin': {'min_inner': 3, 'min_outer':5} }):
     assert len(forward_kmer) == 20
     kmer = forward_kmer
     freq = character_count(kmer)
     reasons = []
     gc_freq = freq['G'] + freq['C']
-    if gc_freq < 5 or gc_freq > 15:
+    
+    if (gc_freq < parms['gc_frequency'][0] or
+        gc_freq > parms['gc_frequency'][1]):
         if not need_explanation:
             return True
         reasons.append('gc_frequency')
-    if longest_consecutive_run(kmer)>5:
+    if longest_consecutive_run(kmer) > parms['homopolymer']:
         if not need_explanation:
             return True
-        reasons.append('homopolymer>5')
-    if longest_dinucleotide_run(kmer) > 3:
+        reasons.append('homopolymer>{}'.format(parms['homopolymer']))
+    if longest_dinucleotide_run(kmer) > parms['dinucleotide_repeats']:
         if not need_explanation:
             return True
-        reasons.append('dinucleotide_repeats>3')
-    hairpin = find_hairpin(kmer)
+        reasons.append('dinucleotide_repeats>{}'.format(
+            parms['dinucleotide_repeats']))
+    hairpin = find_hairpin(kmer, {},
+                           min_outer=parms['hairpin']['min_outer'],
+                           min_inner=parms['hairpin']['min_inner'])
     if hairpin:
         if not need_explanation:
             return True
-        reasons.append('hairpin:' + hairpin)
+        reasons.append('hairpin (min_outer: {}, '
+                       'min_inner: {}):'.format(parms['hairpin']['min_outer'],
+                                                parms['hairpin']['min_inner'])
+                       + hairpin)
     if not need_explanation:
         return False
     return reasons
@@ -94,10 +106,8 @@ def generate_hairpin_bounds(args):
         if outer_left == outer_right and outer_left >= min_outer and inner >= min_inner:
             yield (outer_left, inner, offset_left)
 
-def find_hairpin(kmer, hairpin_bounds={}):
+def find_hairpin(kmer, hairpin_bounds={}, min_outer=5, min_inner=3):
     k = 20
-    min_outer = 5
-    min_inner = 3
     #
     # One way to visualize what's happening here is to consider that we are
     # essentially generating all 20-character sequences that look like

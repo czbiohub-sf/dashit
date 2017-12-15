@@ -1,8 +1,8 @@
 #+TITLE: DASHit: automated guide design
 #+AUTHOR: David Dynerman
 #+EMAIL: david.dynerman@czbiohub.org
-#+INFOJS_OPT: view:t toc:nil ltoc:nil mouse:underline buttons:0 path:http://thomasf.github.io/solarized-css/org-info.min.js
-#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="http://thomasf.github.io/solarized-css/solarized-light.min.css" />
+#+INFOJS_OPT: view:t toc:nil ltoc:nil mouse:underline buttons:0 path:https://thomasf.github.io/solarized-css/org-info.min.js
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="https://thomasf.github.io/solarized-css/solarized-light.min.css" />
 
 =DASHit= are programs for automated design of CRISPR guides. There are two main workflows,
 
@@ -86,13 +86,47 @@ off targets given by the mouse transcriptome (with RN45s removed).
 cd /scratch/example/DASHit-seq/ 
       #+END_SRC
    2. Run =DASHit-seq=, specifying the input mouse RN45s sequence and the off target mouse transcriptome (with RN45s removed)
-      #+BEGIN_SRC 
-
+      #+BEGIN_SRC bash
+dashit-seq.py rn45s-long.fa --offtarget mouse_transcriptome_sans_rn45s > mouse_rn45s_guides.csv         
       #+END_SRC
+   3. =DASHit-seq= will output the designed guides to the specified CSV file. The CSV file also contains some metadata and lists the guides that were filtered due to structural reasons
+      #+BEGIN_EXAMPLE
+Designed CRISPR guides
+TTGCTGCGGAGCATGTGGCT
+CCCCAGTCAAACTCCCCACC
+CTCCAACCGGCCGTCCCCGA
+AACGAAACGAGACACGTGTG
+TTCACCTTGGAGACCTGCTG
+GGCAAGACAGTTACTGATAC
+...      
+      #+END_EXAMPLE
 
+      #+BEGIN_EXAMPLE
+CRISPR guides that were removed from consideration
+CRISPR site, why it was excluded
+AGAGAGGCGACGGAGGGGGG, homopolymer>5
+GGTGGGTTCCCACGGGGCAC, hairpin:-----GTTCCC---GGGCAC
+GACACTCGGGGGGCCGGCGG, gc_frequency; homopolymer>5
+AAATGCACGCATCCCCCCCC, homopolymer>5; dinucleotide_repeats>3
+TCCCCCCCCCAACCACCACA, homopolymer>5; dinucleotide_repeats>3
+AAGACCCGAGCCCGGCGCGC, gc_frequency
+      #+END_EXAMPLE
+
+The guide design from this example was previously done in a bespoke
+fashion by Josh. Josh's guides are available in
+=/scratch/example/DASHit-seq/RN45s-classic-guides.txt=, so you can
+compare the guides =DASHit-seq= creates with the ones that Josh made.
 
 ** Generating an off target input file
+The off target file specified for =DASHit-seq= is simply a list of CRISPR sites that occur in the off target sequence you want to avoid. This file can be prepared using =crispr_sites= in =special_ops_crispr_tools=. 
 
+1. Convert the off target sequence into a FASTA file, say =offtarget.fasta=
+   2. Run =crispr_sites= on the off target FASTA file
+      #+BEGIN_SRC bash
+cat offtarget.fasta | crispr_sites > offtargets.txt
+      #+END_SRC
+
+*Note*: Currently =crispr_sites= is also outputting additional information about each site which is used by =DASHit-reads=. You won't need this information for use as offtarget, so you should open the =offtargets.txt= generated above and delete everything but the first column.
 
 * DASHit server
 <<server>>
