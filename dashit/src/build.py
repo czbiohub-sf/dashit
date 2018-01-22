@@ -115,10 +115,11 @@ def fetch_with_retries(targets, c5, c10, c20, max_attempts=5, timeout=600):
             url = url % (",".join(map(str, targets)), ",".join(map(str, [c5, c10, c20])))
             return requests.get(url, timeout=timeout)
         except (ConnectionResetError, ConnectionError):
+            log.warning('Offtarget server not ready, trying again in {} seconds, attempt {}/{}'.format(timeout, failures + 1, max_attempts))
             failures += 1
             if failures > max_attempts:
                 raise
-            time.sleep(2 ** (failures + 5))
+            time.sleep(timeout)
 
 def main():
     t = time.time()
