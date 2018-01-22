@@ -29,7 +29,7 @@ func updateCounts(guidesToReads [][]int, coverage []int, counts []int, coverageN
         }
         
         for _, read := range guide {
-			if coverage[read] < coverageNum {
+	if coverage[read] < coverageNum {
                 c++
             } 
         }

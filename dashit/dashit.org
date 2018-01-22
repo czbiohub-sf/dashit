@@ -117,6 +117,67 @@ fashion by Josh. Josh's guides are available in
 =/scratch/example/DASHit-seq/RN45s-classic-guides.txt=, so you can
 compare the guides =DASHit-seq= creates with the ones that Josh made.
 
+** BED file visualization
+=DASHit-seq= will output a =BED= file indicating where the designed
+guides hit the input file. If you open the original input FASTA plus
+the BED file in a sequence viewer, for instance in IGV, you can
+visualize how the designed guides tile across the input sequence.
+
+#+CAPTION: Visualizing how generated guides tile across the input sequence
+#+ATTR_HTML: :width 800px
+[[./bed.png]]
+
+** Controlling filtering
+The parameters for offtarget filtering and poor structure filtering
+can be controlled from the command line. For detailed instructions on how to specify the filtering parameters, simply run 
+
+#+BEGIN_SRC bash
+dashit-seq.py -h
+#+END_SRC
+
+You can control how precisely guides need to match off targets to be disqualified by the =--offtarget_radius= option:
+
+#+BEGIN_EXAMPLE
+--offtarget_radius OFFTARGET_RADIUS
+                      Radius used for matching an off target. Specify this
+                      as L_M_N which means filter a guide for hitting an off
+                      target if L, M, N nucleotides in the first 5, 10 and
+                      20 positions of the guide, respectively, match the off
+                      target. e.g., 5_10_20 to require perfect matches;
+                      5_9_18 to allow one mismatch in positions 6-10
+                      positions and to allow 2 mismatches in the last 10
+                      positions
+#+END_EXAMPLE
+
+To control how guides are disqualified for poor structure reasons, you can specify the following options
+
+#+BEGIN_EXAMPLE
+filtering options:
+  these options control how guides are filtered for poor structure reasons
+
+  --gc_freq_min GC_FREQ_MIN
+                        filter guide if # of Gs or Cs is strictly less than
+                        this number
+  --gc_freq_max GC_FREQ_MAX
+                        filter guide if # of Gs or Cs is strictly greater than
+                        this number
+  --homopolymer HOMOPOLYMER
+                        filter guide if strictly more than this number of a
+                        single consecutive nucleotide appears, e.g., AAAAA
+  --dinucleotide_repeats DINUCLEOTIDE_REPEATS
+                        filter guide if strictly more than this number of a
+                        single dinucleotide repeats occur, e.g. ATATAT
+  --hairpin_min_inner HAIRPIN_MIN_INNER
+                        filter guide if a hairpin occurs with >=this inner
+                        hairpin spacing, e.g., oooooIIIooooo, where the o are
+                        reverse complements and III is the inner hairpin
+                        spacing
+  --hairpin_min_outer HAIRPIN_MIN_OUTER
+                        filter guide if a hairpin occurs with >=this outer
+                        hairpin width, e.g., oooooIIIooooo, where the o are
+                        reverse complements and ooooo is the outer hairpin
+#+END_EXAMPLE
+
 ** Generating an off target input file
 The off target file specified for =DASHit-seq= is simply a list of CRISPR sites that occur in the off target sequence you want to avoid. This file can be prepared using =crispr_sites= in =special_ops_crispr_tools=. 
 
@@ -127,6 +188,7 @@ cat offtarget.fasta | crispr_sites > offtargets.txt
       #+END_SRC
 
 *Note*: Currently =crispr_sites= is also outputting additional information about each site which is used by =DASHit-reads=. You won't need this information for use as offtarget, so you should open the =offtargets.txt= generated above and delete everything but the first column.
+
 
 * DASHit server
 <<server>>

@@ -697,13 +697,14 @@ if __name__ == '__main__':
     input_sequences = read_sequences_from_file(args.input)
 
     # Check/wait that offtarget server has started
-    try:
-        log.info("Poking offtarget server.  Timeout 10 seconds.")
-        fetch_with_retries(["ACGT" * 5], 5, 9, 18, max_attempts=5, timeout=10)
-        log.info("Offtarget server is alive.")
-    except:
-        log.error('Error starting offtarget server, see messages above')
-        sys.exit(-1)
+    if args.offtarget is not None:
+        try:
+            log.info("Poking offtarget server.  Timeout 10 seconds.")
+            fetch_with_retries(["ACGT" * 5], 5, 9, 18, max_attempts=5, timeout=10)
+            log.info("Offtarget server is alive.")
+        except:
+            log.error('Error starting offtarget server, see messages above')
+            sys.exit(-1)
 
     # This dictionary contains CRISPR sites that will be disregarded
     # during guide optimization, e.g. because they hit offtargets
