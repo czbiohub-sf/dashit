@@ -2,21 +2,22 @@ package main
 
 import (
     "bufio"
-	"io"
+    "io"
     "os"
     "fmt"
     "strings"
     "strconv"
-	"math/rand"
-	"sort"
-	"github.com/shenwei356/bio/seqio/fastx"
+    "math/rand"
+    "sort"
+    "github.com/shenwei356/bio/seqio/fastx"
+    "regexp"
 )
 
 func checkError(err error) {
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+    if err != nil {
+        fmt.Fprintln(os.Stderr, err)
+        os.Exit(1)
+    }
 }
 
 func updateCounts(guidesToReads [][]int, coverage []int, counts []int, coverageNum int) {
@@ -29,7 +30,7 @@ func updateCounts(guidesToReads [][]int, coverage []int, counts []int, coverageN
         }
         
         for _, read := range guide {
-	if coverage[read] < coverageNum {
+            if coverage[read] < coverageNum {
                 c++
             } 
         }
@@ -38,8 +39,12 @@ func updateCounts(guidesToReads [][]int, coverage []int, counts []int, coverageN
     }
 }
 
-func coverReadsGreedy(guidesToReads [][]int, coverage []int, counts []int, maxGuides int, coverageNum int) []int {
+func coverReadsGreedy(guidesToReads [][]int, coverage []int, counts []int, maxGuides int, coverageNum int) ([]int, []int) {
     guides := make([]int, maxGuides)
+
+    // How many new counts each chosen guide covers that weren't
+    // covered by a previous guide
+    countsChosen := make([]int, maxGuides)
     
     for i := 0; i < maxGuides; i++ {
         // Greedy: Find guide with largest count
@@ -59,6 +64,8 @@ func coverReadsGreedy(guidesToReads [][]int, coverage []int, counts []int, maxGu
             coverage[read] += 1
         }
 
+        countsChosen[i] = maxCount
+        
         // don't reuse the guide we just used
         counts[maxCountIdx] = -1
         
@@ -69,7 +76,9 @@ func coverReadsGreedy(guidesToReads [][]int, coverage []int, counts []int, maxGu
         }
     }
 
-    return guides
+    fmt.Fprintf(os.Stderr, "Found %d guides...\n", len(guides))
+    
+    return guides, countsChosen
 }
 
 func printUsage() {
@@ -77,7 +86,7 @@ func printUsage() {
 }
 
 func main() {
-	if len(os.Args) < 4 {
+    if len(os.Args) < 4 {
         os.Stderr.WriteString("Error: Not enough input arguments\n")
         printUsage()
         os.Exit(-1);
@@ -87,13 +96,13 @@ func main() {
     numSites, _ := strconv.Atoi(os.Args[2])
     coverageNum, _ := strconv.Atoi(os.Args[3])
 
-	// optionally specify reads file
-	var readsFile string = ""
+    // optionally specify reads file
+    var readsFile string = ""
 
-	if len(os.Args) == 5 {
-		readsFile = os.Args[4]
-	}
-	
+    if len(os.Args) == 5 {
+        readsFile = os.Args[4]
+    }
+    
     fmt.Fprintf(os.Stderr, "Choosing the %d sites from %s that will cover the most reads...\n", numSites, inputFilename)
 
     if file, err := os.Open(inputFilename); err == nil {
@@ -105,11 +114,22 @@ func main() {
 
         var sites []string
         
-        maxRead := 0
-
         maxNumReads := 0
-
+       
         line, err := reader.ReadString('\n')
+
+        var totalNumReadsRegExp = regexp.MustCompile(`Total.*?(\d+)`)
+
+        if len(totalNumReadsRegExp.FindStringSubmatch(line)) == 0 {
+            fmt.Fprintf(os.Stderr, "Error: Input file %s doesn't list total number of reads on the first line. Re-create this file with crispr_sites -r\n", inputFilename)
+            os.Exit(-1)
+        }
+        
+        var totalNumReads, _ = strconv.Atoi(totalNumReadsRegExp.FindStringSubmatch(line)[1])
+
+        fmt.Fprintf(os.Stderr, "Total number of reads: %d\n", totalNumReads)
+        
+        line, err = reader.ReadString('\n')
         
         for err == nil {
             readsStr := strings.Fields(line)
@@ -119,27 +139,24 @@ func main() {
             readsStr = readsStr[1:]
 
             reads := make([]int, 0)
-			i := 0
-			for _, rStr := range readsStr {
-				r, _ := strconv.Atoi(rStr)
+            i := 0
+            for _, rStr := range readsStr {
+                r, _ := strconv.Atoi(rStr)
 
-				readExists := false
-				// A single guide can match a single read multiple
-				// times, so check that we only add each read once
-				for _, cur_r := range reads {
-					if r == cur_r {
-						readExists = true
-						break
-					}
-				}
+                readExists := false
+                // A single guide can match a single read multiple
+                // times, so check that we only add each read once
+                for _, cur_r := range reads {
+                    if r == cur_r {
+                        readExists = true
+                        break
+                    }
+                }
 
-				if readExists == false {
-					reads = append(reads, r)
-					i = i + 1
-					if r > maxRead {
-						maxRead = r
-					}
-				}
+                if readExists == false {
+                    reads = append(reads, r)
+                    i = i + 1
+                }
             }
 
             if len(reads) > maxNumReads {
@@ -152,98 +169,82 @@ func main() {
 
         fmt.Fprintf(os.Stderr, "Largest # of reads hit by a single guide is %d\n", maxNumReads)
 
-        coverage := make([]int, maxRead + 1)
+        coverage := make([]int, totalNumReads + 1)
         counts := make([]int, len(guidesToReads))
 
         updateCounts(guidesToReads, coverage, counts, coverageNum)
 
-        guides := coverReadsGreedy(guidesToReads, coverage, counts, numSites, coverageNum)
+        guides, countsChosen := coverReadsGreedy(guidesToReads, coverage, counts, numSites, coverageNum)
+        
+        readIdxToSeq := make(map[int] string)
+        guideIdxToReadIdx := make([]int, numSites)
 
-		// build a cumulative sum of the number of reads covered as we
-		// cumsum, we don't want to count reads that previous guides
-		// have already hit
+        fmt.Printf("Total number of reads: %d\n", totalNumReads)
+        
+        if len(readsFile) > 0 {
+            // collect a random read for each guide we've designed
+            for i, g := range guides {
+                guideIdxToReadIdx[i] = guidesToReads[g][rand.Intn(len(guidesToReads[g]))]
+            }
 
-		readsCovered := make(map[int] bool)
-		numReadsCovered := make([]int, numSites)
+            // Now we'll find the reads we chose in the specified
+            // input FASTA file. Since this can be a big file, we'll
+            // sort the read indices we need to lookup and find them
+            // sequentially
+            sortedReads := make([]int, len(guideIdxToReadIdx))
+            copy(sortedReads, guideIdxToReadIdx)
+            sort.Ints(sortedReads)
 
-		for i, g := range guides {
-			n := 0
-			for _, r := range guidesToReads[g] {
-				if readsCovered[r] == false {
-					n += 1
-					readsCovered[r] = true
-				}
-			}
-			numReadsCovered[i] = n
-		}
-		
-		readIdxToSeq := make(map[int] string)
-		guideIdxToReadIdx := make([]int, numSites)
-		
-		if len(readsFile) > 0 {
-			// collect a random read for each guide we've designed
-			for i, g := range guides {
-				guideIdxToReadIdx[i] = guidesToReads[g][rand.Intn(len(guidesToReads[g]))]
-			}
+            nextReadIdx := 0
+            
+            reader, err := fastx.NewDefaultReader(readsFile)
 
-			// Now we'll find the reads we chose in the specified
-			// input FASTA file. Since this can be a big file, we'll
-			// sort the read indices we need to lookup and find them
-			// sequentially
-			sortedReads := make([]int, len(guideIdxToReadIdx))
-			copy(sortedReads, guideIdxToReadIdx)
-			sort.Ints(sortedReads)
+            checkError(err)
 
-			nextReadIdx := 0
-			
-			reader, err := fastx.NewDefaultReader(readsFile)
+            // Reads in normally formatted fasta files (that begin
+            // with a >chromosome comment) are 1-indexed
+            i := 1
+                
+            for {
+                record, err := reader.Read()
 
-			checkError(err)
+                if err != nil {
+                    if err == io.EOF {
+                        break
+                    }
+                    checkError(err)
+                    break
+                }
 
-			// Reads in normally formatted fasta files (that begin
-			// with a >chromosome comment) are 1-indexed
-			i := 1
-				
-			for {
-				record, err := reader.Read()
+                if i == sortedReads[nextReadIdx] {
+                    nextReadIdx += 1
+                    readIdxToSeq[i] = fmt.Sprintf("%s", record.Seq.Seq)
+                    
+                    if nextReadIdx >= numSites {
+                        break
+                    }
+                }
 
-				if err != nil {
-					if err == io.EOF {
-						break
-					}
-					checkError(err)
-					break
-				}
-
-				if i == sortedReads[nextReadIdx] {
-					nextReadIdx += 1
-					readIdxToSeq[i] = fmt.Sprintf("%s", record.Seq.Seq)
-					
-					if nextReadIdx >= numSites {
-						break
-					}
-				}
-
-				i += 1
-			}
-			
-			fmt.Printf("Site, Site index, Number of reads covered by site, cumulative number of reads covered, random read hit by this guide\n");
-		} else {
-			fmt.Printf("Site, Site index, Number of reads covered by site, cumulative number of reads covered\n");
-		}
-
-		cumulativeReadsCovered := 0
-        for i, g := range guides {
-            cumulativeReadsCovered += numReadsCovered[i]
-
-			if len(readsFile) > 0 {
-				fmt.Printf("%s, %d, %d, %d, %s\n", sites[g], g, numReadsCovered[i], cumulativeReadsCovered, readIdxToSeq[guideIdxToReadIdx[i]]);				
-			} else {
-				fmt.Printf("%s, %d, %d, %d\n", sites[g], g, numReadsCovered[i], cumulativeReadsCovered);				
-			}
+                i += 1
+            }
+            
+            fmt.Printf("Site, Site index, Number of reads covered by site, cumulative number of reads covered, random read hit by this guide\n");
+        } else {
+            fmt.Printf("Site, Site index, Number of reads covered by site, cumulative number of reads covered\n");
         }
 
-        fmt.Fprintf(os.Stderr, "%d sites covered %d reads, # reads: %d\n", numSites, cumulativeReadsCovered, maxRead)
+        cumulativeReadsCovered := 0
+        for i, g := range guides {
+            cumulativeReadsCovered += countsChosen[i]
+
+            if len(readsFile) > 0 {
+                fmt.Printf("%s, %d, %d, %d, %s\n", sites[g], g, countsChosen[i], cumulativeReadsCovered, readIdxToSeq[guideIdxToReadIdx[i]]);                
+            } else {
+                fmt.Printf("%s, %d, %d, %d\n", sites[g], g, countsChosen[i], cumulativeReadsCovered);                
+            }
+        }
+
+        fmt.Fprintf(os.Stderr, "%d sites covered %d reads, # reads: %d\n", numSites, cumulativeReadsCovered, totalNumReads)
     }
 
     os.Stderr.Sync()
