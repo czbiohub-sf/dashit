@@ -18,7 +18,7 @@ if __name__ == '__main__':
         match = re.search(r'Total.+?(\d+)', lines[0])
         if match is not None:
             num_reads = int(match.group(1))
-	    lines = lines[1:]
+            lines = lines[1:]
 
         for line in lines:
             line = line.split()
