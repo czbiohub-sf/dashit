@@ -139,24 +139,10 @@ func main() {
             readsStr = readsStr[1:]
 
             reads := make([]int, 0)
-            i := 0
             for _, rStr := range readsStr {
                 r, _ := strconv.Atoi(rStr)
 
-                readExists := false
-                // A single guide can match a single read multiple
-                // times, so check that we only add each read once
-                for _, cur_r := range reads {
-                    if r == cur_r {
-                        readExists = true
-                        break
-                    }
-                }
-
-                if readExists == false {
-                    reads = append(reads, r)
-                    i = i + 1
-                }
+                reads = append(reads, r)
             }
 
             if len(reads) > maxNumReads {
