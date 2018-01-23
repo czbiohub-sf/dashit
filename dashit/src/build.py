@@ -8,6 +8,9 @@ if sys.version_info < (3,5):
     sys.exit(-1)
 
 import subprocess, traceback, time, requests
+from requests.exceptions import ConnectionError
+import logging
+log = logging.getLogger(__name__)
 
 # For given radius c5_c10_c20 around a target we can determine if there are
 # any offtargets in that radius.  There are two radii of interest.
