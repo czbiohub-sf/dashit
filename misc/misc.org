@@ -17,55 +17,93 @@ consisting of guides)
 #!/usr/bin/env python3
 import sys
 import re
+import argparse
+from Bio import SeqIO
 
 if __name__ == '__main__':
-    sites_to_reads_filename = sys.argv[1]
-    sites_filename = sys.argv[2]
 
-    sites_to_reads = {}
+    parser = argparse.ArgumentParser(description='Score how CRISPR guides would DASH an NGS run')
 
-    largest_read_idx = 0
+    parser.add_argument('guides', type=str, help='Guides file, as output by optimize_guides')
+    parser.add_argument('FASTA', type=str, help='FASTA file to score guides against')
+    parser.add_argument('--split', help='split input FASTA according to which reads were hit by guides')
 
-    with open(sites_to_reads_filename, 'r') as sites_to_reads_file:
-        lines = sites_to_reads_file.readlines()
+    args = parser.parse_args()
 
-        num_reads = None
+    # Read in guides
+    print('Reading guides...')
 
-        match = re.search(r'Total.+?(\d+)', lines[0])
-        if match is not None:
-            num_reads = int(match.group(1))
-            lines = lines[1:]
-
-        for line in lines:
-            line = line.split()
-            sites_to_reads[line[0]] = [int(read) for read in line[1:]]
-            if max(sites_to_reads[line[0]]) > largest_read_idx:
-                largest_read_idx = max(sites_to_reads[line[0]])
-
-    # If we didn't pickup the number of reads from the first line in
-    # the file (e.g., processing an older file) use largest_read_idx
-    # as the number of reads
-    if num_reads is None:
-        num_reads = largest_read_idx
-        
-    reads_covered = {}
-    useless_guides = []
+    guides = []
     
-    with open(sites_filename, 'r') as sites_file:
-        for line in sites_file.readlines()[2:]:
-            site = line.split(',')[0].strip(' ')
+    with open(args.guides, 'r') as guides_file:
+        for line in guides_file.readlines()[2:]:
+            guide = line.split(',')[0].strip(' ')
 
-            if site not in sites_to_reads:
-                useless_guides.append(site)
-                continue
+            guides.append(guide)
+
+    print('Reading {}...'.format(args.FASTA))
+
+    reads_hit = []
+    reads_missed = []
+
+    for rec in SeqIO.parse(args.FASTA, "fasta"):
+        if rec.seq in guides:
+            reads_hit.append(rec)
+        else:
+            reads_missed.append(rec)
+
+    print('{} will hit {}/{} = {:2.2g}% of reads in {}'.format(args.guides, len(reads_hit), len(reads_hit) + len(reads_missed),
+                                                               len(reads_hit)/float(len(reads_hit) + len(reads_missed)),
+                                                               args.FASTA))
             
-            for read in sites_to_reads[site]:
-                if read in reads_covered:
-                    reads_covered[read] += 1
-                else:
-                    reads_covered[read] = 1
+    
+    # sites_to_reads_filename = sys.argv[1]
+    # sites_filename = sys.argv[2]
 
-    print("{} will hit {}/{} = {:2.2g}% reads in {}, {} guides hit no reads".format(sites_filename, len(reads_covered.keys()), num_reads, len(reads_covered.keys())/float(num_reads) * 100, sites_to_reads_filename, len(useless_guides)))
+    # sites_to_reads = {}
+
+    # largest_read_idx = 0
+
+    # with open(sites_to_reads_filename, 'r') as sites_to_reads_file:
+    #     lines = sites_to_reads_file.readlines()
+
+    #     num_reads = None
+
+    #     match = re.search(r'Total.+?(\d+)', lines[0])
+    #     if match is not None:
+    #         num_reads = int(match.group(1))
+    #         lines = lines[1:]
+
+    #     for line in lines:
+    #         line = line.split()
+    #         sites_to_reads[line[0]] = [int(read) for read in line[1:]]
+    #         if max(sites_to_reads[line[0]]) > largest_read_idx:
+    #             largest_read_idx = max(sites_to_reads[line[0]])
+
+    # # If we didn't pickup the number of reads from the first line in
+    # # the file (e.g., processing an older file) use largest_read_idx
+    # # as the number of reads
+    # if num_reads is None:
+    #     num_reads = largest_read_idx
+        
+    # reads_covered = {}
+    # useless_guides = []
+    
+    # with open(sites_filename, 'r') as sites_file:
+    #     for line in sites_file.readlines()[2:]:
+    #         site = line.split(',')[0].strip(' ')
+
+    #         if site not in sites_to_reads:
+    #             useless_guides.append(site)
+    #             continue
+            
+    #         for read in sites_to_reads[site]:
+    #             if read in reads_covered:
+    #                 reads_covered[read] += 1
+    #             else:
+    #                 reads_covered[read] = 1
+
+    #print("{} will hit {}/{} = {:2.2g}% reads in {}, {} guides hit no reads".format(sites_filename, len(reads_covered.keys()), num_reads, len(reads_covered.keys())/float(num_reads) * 100, sites_to_reads_filename, len(useless_guides)))
 #+END_SRC
 
 ** Guide scoring for original DASH dataset

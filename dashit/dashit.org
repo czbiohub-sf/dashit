@@ -1,8 +1,6 @@
 #+TITLE: DASHit: automated guide design
 #+AUTHOR: David Dynerman
 #+EMAIL: david.dynerman@czbiohub.org
-#+INFOJS_OPT: view:t toc:nil ltoc:nil mouse:underline buttons:0 path:https://thomasf.github.io/solarized-css/org-info.min.js
-#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="https://thomasf.github.io/solarized-css/solarized-light.min.css" />
 
 =DASHit= are programs for automated design of CRISPR guides. There are two main workflows,
 
@@ -31,8 +29,11 @@ seqtk seq -A NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fastq > NID0092_CSF_ATGTCAG
       #+end_SRC
    2. Run =crispr_sites= to build a map of crispr sites->reads in which they appear
       #+BEGIN_SRC bash
-cat NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fasta | crispr_sites > NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_sites_to_reads.txt
+cat NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fasta | crispr_sites -r > NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_sites_to_reads.txt
       #+END_SRC
+      #+BEGIN_EXAMPLE
+      *Note*: The new option
+      #+END_EXAMPLE
       The format of =NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_sites_to_reads.txt= is
       #+BEGIN_EXAMPLE
 AAAAAAAAAAAAAAAAAGAC    13109137 4177172 6275108 12688285 ... 
@@ -57,18 +58,79 @@ optimize_guides NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_sites_to_reads.txt 100 1
       #+END_SRC
 
 ** Scoring automated guide design
-=score_guides.py= compares a list of guides against a FASTQ file and computes how many reads are hit by the guides.
-
-To run =score_guides.py= just give it the =_sites_to_reads.txt= file and the =_guides.csv= files from an [[DASHit-reads][automated guide design.]] Continuing the example from above,
+=score_guides= compares a list of guides against a FASTQ file and computes how many reads are hit by the guides. Continuing the example from above, we run
 
 #+BEGIN_SRC bash
-score_guides.py NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_sites_to_reads.txt NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv 
+score_guides NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fasta
 #+END_SRC
 
 #+BEGIN_EXAMPLE
-NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv will hit 7005294/16617695 = 42% reads in NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_sites_to_reads.txt, 0 guides hit no reads
+Scoring guides against NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fasta
+100 guides in NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv vs. NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fasta hit 5239845/16617695 = 31.53%
+Parsing FASTA took 11m8.358304821s
 #+END_EXAMPLE
 
+*Note*: Guide scoring currently takes a long time, e.g. in the above
+example scoring 100 guides against a 3.4 GB FASTA file took 11
+minutes. If this becomes burdonsome, we can work on making it faster,
+either by adapting the =crispr_sites= code or using the
+=_sites_to_reads.txt=
+
+
+
+*** Splitting a FASTA file
+=score_guides= can split the input FASTA file, writing out the reads that were hit by guides and those that weren't to two separate files. To do this, specify the =-s= option:
+
+#+BEGIN_SRC bash
+score_guides NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fasta -s
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+Scoring guides against NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fasta
+100 guides in NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv vs. NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fasta hit 5239845/16617695 = 31.53%
+Parsing FASTA took 11m14.83192505s
+Wrote NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_dashed.fasta
+Wrote NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_undashed.fasta
+#+END_EXAMPLE
+
+We can use =score_guides= to check that the DASHed and unDASHed FASTA files are correct:
+
+#+BEGIN_SRC bash
+score_guides NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_dashed.fasta
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+Scoring guides against NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_dashed.fasta
+100 guides in NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv vs. NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_dashed.fasta hit 5239845/5239845 = 100.00%
+Parsing FASTA took 55.039976945s
+#+END_EXAMPLE
+
+#+BEGIN_SRC bash
+score_guides NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_undashed.fasta
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+Scoring guides against NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_undashed.fasta
+100 guides in NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv vs. NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_undashed.fasta hit 0/11377850 = 0.00%
+Parsing FASTA took 10m11.982396976s
+#+END_EXAMPLE
+
+*** Scoring many FASTA files at once
+=score_guides= outputs some (hopefully) helpful progress and diagnostic output to =stderr=. Only a single summary line is output to =stdout=, though, so if you're scoring many FASTA files, redirecting =stdout= will give you a nice output with one single line per FASTA, e.g.
+
+#+BEGIN_SRC bash
+for i in `ls *.fasta`; do score_guides NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv $i >> scoring; done
+#+END_SRC
+
+#+BEGIN_SRC bash
+cat scoring
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+100 guides in NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv vs. NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_dashed.fasta hit 5239845/5239845 = 100.00%
+100 guides in NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv vs. NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fasta hit 5239845/16617695 = 31.53%
+100 guides in NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv vs. NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_undashed.fasta hit 0/11377850 = 0.00%
+#+END_EXAMPLE
 
 * DASHit-seq: Guide design by specifying a target sequence
 <<DASHit-seq>> 
@@ -219,3 +281,7 @@ You can:
 1. Upload input files to =/scratch= directly, or,
 2. Run =aws cp= on the dashit server to copy directly from S3.
    - To do this you'll need to setup your AWS credentials on =dashit.czbiohub.org= 
+
+* DASHit source code
+- =DASHit-seq= is implemented as a literate programming file which you can view here [[file:dashit-seq.org][here]].
+- You can view the =DASHit-reads= programs, =crispr_sites= and =optimize_guides=, [[https://github.com/czbiohub/special_ops_crispr_tools/tree/emperordali/guides_to_reads/crispr_sites][here]] and [[https://github.com/czbiohub/special_ops_crispr_tools/tree/emperordali/guides_to_reads/dashit][here]]. 
