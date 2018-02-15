@@ -1,0 +1,7 @@
+setup.py
+dashit-seq/__init__.py
+dashit-seq/dashit-seq.py
+dashit_seq.egg-info/PKG-INFO
+dashit_seq.egg-info/SOURCES.txt
+dashit_seq.egg-info/dependency_links.txt
+dashit_seq.egg-info/top_level.txt
