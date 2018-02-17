@@ -3,7 +3,7 @@
 #+AUTHOR: David Dynerman
 #+EMAIL: david.dynerman@czbiohub.org
 #+OPTIONS: 
-#+PROPERTY: header-args:python :tangle "src/dashit-seq.py" :noweb yes
+#+PROPERTY: header-args:python :tangle "src/dashit-seq.py" :noweb yes :tangle-mode (identity #o755)
 #+PROPERTY: header-args:org :exports results :results replace
 
 #+NAME: doc:dashit-seq
@@ -146,7 +146,9 @@ unique-ify the the target list.
     site_variables = {}
 #+END_SRC
 
-Now we can create the optimization variables and set the minimization objective, as Equation $\eqref{objective}$.
+Now we can create the optimization variables and set the minimization
+objective, as Equation $\eqref{objective}$.
+
 #+BEGIN_SRC python
     for i, target_seq in enumerate(sites_to_targets):
         if target_seq in filtered_sites:
@@ -678,7 +680,7 @@ if __name__ == '__main__':
                      'dinucleotide_repeats': args.dinucleotide_repeats,
                      'hairpin': { 'min_inner': args.hairpin_min_inner,
                                   'min_outer': args.hairpin_min_outer } }
-    
+
     if args.offtarget is not None:
         offtarget_proc = launch_offtarget_server(args.offtarget)
 
@@ -698,8 +700,8 @@ if __name__ == '__main__':
     # Check/wait that offtarget server has started
     if args.offtarget is not None:
         try:
-            log.info("Poking offtarget server.  Timeout 10 seconds.")
-            fetch_with_retries(["ACGT" * 5], 5, 9, 18, max_attempts=5, timeout=10)
+            log.info("Poking offtarget server.  Timeout 30 seconds.")
+            fetch_with_retries(["ACGT" * 5], 5, 9, 18, max_attempts=10, timeout=30)
             log.info("Offtarget server is alive.")
         except:
             log.error('Error starting offtarget server, see messages above')
@@ -709,10 +711,11 @@ if __name__ == '__main__':
     # during guide optimization, e.g. because they hit offtargets
     filtered_sites = {}
 
-    filter_sites_offtarget(input_sequences, filtered_sites, args.offtarget_radius)
+    if args.offtarget is not None:
+        filter_sites_offtarget(input_sequences, filtered_sites, args.offtarget_radius)
 
-    log.info('Done with offtarget server, shutting it down')
-    offtarget_proc.terminate()
+        log.info('Done with offtarget server, shutting it down')
+        offtarget_proc.terminate()
 
     filter_sites_poor_structure(input_sequences, filtered_sites, filter_parms)
     
@@ -756,10 +759,10 @@ if __name__ == '__main__':
         else:
             print('Solution may be SUB-OPTIMAL')
 
-        print('Designed CRISPR guides')
+        print('Designed CRISPR guides, Guide targets')
             
         for site in library:
-            print(site)
+            print(site + ', ' + "; ".join(["{}: {}".format(t[0].name, t[1][1]) for t in sites_to_targets[site]]))
 
         print('\n\nCRISPR guides that were removed from consideration')
 
