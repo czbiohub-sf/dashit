@@ -49,7 +49,7 @@ func TestSetHitsAndMisses(t *testing.T) {
 
 	guides := getGuides(TestGuidesFileName)
 
-	readHits := &NoSplitReadHits{}
+	readHits := &ReadHits{}
 
 	SetHitsAndMisses(reader, guides, readHits)
 

@@ -41,10 +41,6 @@ func (rh *ReadHits) getTotal() int {
 	return rh.hits + rh.misses
 }
 
-type NoSplitReadHits struct {
-	ReadHits
-}
-
 type SplitReadHits struct {
 	ReadHits
 	dashedFile, undashedFile *xopen.Writer
@@ -181,7 +177,7 @@ func main() {
 
 		readHits = &SplitReadHits{dashedFile: dashedFile, undashedFile: undashedFile}
 	} else {
-		readHits = &NoSplitReadHits{}
+		readHits = &ReadHits{}
 	}
 
 	SetHitsAndMisses(reader, guides, readHits)
