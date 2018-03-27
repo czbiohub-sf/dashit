@@ -1,6 +1,7 @@
-EXAMPLE_DASH_READS_DIR = /scratch/DASHit-reads
-EXAMPLE_DASH_SEQ_DIR = /scratch/DASHit-seq
-EXAMPLE_OUTPUT_DIR = /scratch/DASHit-example-output
+DATA_DIR = /scratch/mcgeever
+EXAMPLE_DASH_READS_DIR = ${DATA_DIR}/DASHit-reads
+EXAMPLE_DASH_SEQ_DIR = ${DATA_DIR}/DASHit-seq
+EXAMPLE_OUTPUT_DIR = ${DATA_DIR}/DASHit-example-output
 
 setup: build-all install-all
 
