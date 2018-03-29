@@ -58,7 +58,6 @@ optimize_guides NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_sites_to_reads.txt 100 1
       #+END_SRC
 
 ** Scoring automated guide design
-<<<<<<< HEAD
 =score_guides= compares a list of guides against a FASTQ file and computes how many reads are hit by the guides. Continuing the example from above, we run
 
 #+BEGIN_SRC bash
@@ -93,18 +92,11 @@ Parsing FASTA took 11m14.83192505s
 Wrote NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_dashed.fasta
 Wrote NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_undashed.fasta
 #+END_EXAMPLE
-=======
-=score_guides.py= compares a list of guides against a FASTA file and computes how many reads are hit by the guides.
->>>>>>> Basic testing for score guides.
 
 We can use =score_guides= to check that the DASHed and unDASHed FASTA files are correct:
 
 #+BEGIN_SRC bash
-<<<<<<< HEAD
 score_guides NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_dashed.fasta
-=======
-score_guides.py NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_sites_to_reads.txt NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv
->>>>>>> Basic testing for score guides.
 #+END_SRC
 
 #+BEGIN_EXAMPLE
