@@ -11,9 +11,11 @@ import re
 import subprocess
 import signal
 import sys
+import threading
+import traceback
 from ash import flash
 from pathlib import Path
-from tqdm import tqdm
+from tqdm import tqdm, trange
 from collections import defaultdict
 
 log = logging.getLogger(__name__)
@@ -39,10 +41,7 @@ def filter_sites_poor_structure(sequences, filtered_sites, filter_parms):
 
     initial_num_filtered = len(filtered_sites)
 
-    for target in tqdm(sequences):
-        reasons = flash.poor_structure(target, True, filter_parms)
-        if len(reasons) > 0:
-            filtered_sites[target[0]] = "; ".join(reasons)
+    filtered_sites.update(flash.poor_structure(sequences, filter_parms))
 
     log.info('removed {} sites from consideration due to poor '
 	     'structure'.format(len(filtered_sites) - initial_num_filtered))
@@ -284,11 +283,14 @@ if __name__ == '__main__':
             for guide in offtargets:
                 filtered_guides[guide] = ('offtarget against '
                                           '{}'.format(args.offtarget))
-                candidate_guides.remove(guide)
 
             log.info('{} guides matched against offtargets '
                      'in {}'.format(len(filtered_guides), args.offtarget))
+            log.info('Killing offtarget server')
+            offtarget_proc.kill()
             
+        candidate_guides = [g for g in candidate_guides if g not in filtered_guides]
+        
         # Do quality filtering
         log.info('Filtering guides for quality')
 
