@@ -63,18 +63,11 @@ run-reads-example:
 	./misc/score_guides $(EXAMPLE_OUTPUT_DIR)/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv $(EXAMPLE_OUTPUT_DIR)/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_undashed.fasta
 
 run-seq-example:
-	$(MAKE) start-offtarget-server
+	PATH=$$PATH:$(VENDOR_DIR)/$(SPECIAL_OPS_DIR)/offtarget \
 	python dashit/dashit-seq/dashit-seq/dashit-seq.py $(EXAMPLE_DASH_SEQ_DIR)/rn45s-long.fa --offtarget $(EXAMPLE_DASH_SEQ_DIR)/mouse_transcriptome_sans_rn45s > $(EXAMPLE_OUTPUT_DIR)/mouse_rn45s_guides.csv
-	$(MAKE) stop-offtarget-server
 
 test-score-guides: | build-score-guides
 	./misc/score_guides $(EXAMPLE_OUTPUT_DIR)/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv $(EXAMPLE_OUTPUT_DIR)/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fasta -s
 
 quick-test-score-guides: | build-score-guides
 	./misc/score_guides misc/test_guides.csv misc/test_reads.fasta
-
-start-offtarget-server:
-	HOST=file:///$(EXAMPLE_DASH_SEQ_DIR)/mouse_transcriptome_sans_rn45s ./$(VENDOR_DIR)/$(SPECIAL_OPS_DIR)/offtarget/offtarget &
-
-stop-offtarget-server:
-	- killall offtarget
