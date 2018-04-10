@@ -45,7 +45,7 @@ install-deps:
 test:
 	cd misc && go test -v
 
-all-with-run: setup run-examples
+all-with-run: install run-examples
 
 run-examples: | run-examples-setup run-reads-example run-seq-example
 
