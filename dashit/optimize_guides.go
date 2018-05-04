@@ -20,6 +20,9 @@ func checkError(err error) {
     }
 }
 
+// updateCounts updates how many reads each guide is currently
+// hitting. Reads that have been covered by other guides are not
+// counted. 
 func updateCounts(guidesToReads [][]int, coverage []int, counts []int, coverageNum int) {
     for guideIdx, guide := range guidesToReads {
         c := 0
@@ -58,13 +61,21 @@ func coverReadsGreedy(guidesToReads [][]int, coverage []int, counts []int, maxGu
             }
         }
 
+	// for calculating statistics about how many reads our guide
+	// set is covering, we only want to count reads for this guide
+	// that haven't already been counted for another guide
+	numUncoveredReads := 0    
+	    
         // take this guide!
         guides[i] = maxCountIdx
         for _, read := range guidesToReads[maxCountIdx] {
-            coverage[read] += 1
+	    if coverage[read] == 0 {
+	        numUncoveredReads += 1
+	    }
+	    coverage[read] += 1
         }
 
-        countsChosen[i] = maxCount
+        countsChosen[i] = numUncoveredReads
         
         // don't reuse the guide we just used
         counts[maxCountIdx] = -1
