@@ -1,0 +1,18 @@
+#+TITLE: =guide_design_tools=: Automated design of Cas9 guide RNAs
+#+AUTHOR: David Dynerman
+#+EMAIL: david.dynerman@czbiohub.org
+#+OPTIONS: toc:nil num:nil
+
+=guide_design_tools= is a collection of software for the automated design of Cas9 guide RNAs (gRNAs):
+
+1. [[./dashit/dashit.org][DASHit]] designs gRNAs for [[https://doi.org/10.1186/s13059-016-0904-5][DASH]] experiments based either on a set of
+   existing sequencing reads, or based on an explicitly provided
+   target sequence.
+
+* License
+For *academic* and *non-profit* uses, =guide_design_tools= is free to use
+and modify. You must read and agree to the [[./LICENSE.md][LICENSE.md]] before using
+=guide_design_tools=.
+
+If you are intersted in using =guide_design_tools= for commercial
+purposes, please contact [[mailto:steven.collier@czbiohub.org][Steve Collier]] at the CZ Biohub.
