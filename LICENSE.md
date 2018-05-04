@@ -7,13 +7,13 @@ SOFTWARE LICENSE
 ================
 
 This agreement (the “Agreement”) is between [the Chan Zuckerberg
-Biohub] (“CZ Biohub”, “we”, “us” or “our”) and you and governs your
-use of this software and accompanying documentation (the “Software”).
-Please carefully read this Agreement, which contains important
-provisions regarding your use of the Software and which make you
-responsible for losses associated with use of the Software.  By using
-the Software, you agree to these terms.  If you don’t agree with them,
-do not use the Software.
+Biohub](https://www.czbiohub.org) (“CZ Biohub”, “we”, “us” or “our”)
+and you and governs your use of this software and accompanying
+documentation (the “Software”).  Please carefully read this Agreement,
+which contains important provisions regarding your use of the Software
+and which make you responsible for losses associated with use of the
+Software.  By using the Software, you agree to these terms.  If you
+don’t agree with them, do not use the Software.
 
 1. You represent and warrant that you are of legal age to enter into
    and carry out this Agreement, and, if you are using the Software on
@@ -32,12 +32,12 @@ do not use the Software.
 3. Restrictions.
 
 	You may not:
-		1. use the software to provide medical or other services to anyone;
-		2. use the Software to harm anyone, to infringe or otherwise
-			violate anyone’s rights, or to violate applicable laws,
-			rules or regulations (“Applicable Law”); or
-		3. rent, lease, lend, sell, assign, transfer, or otherwise
-			make available the Software to any third party.
+	1. use the software to provide medical or other services to anyone;
+	2. use the Software to harm anyone, to infringe or otherwise
+	violate anyone’s rights, or to violate applicable laws, rules or
+	regulations (“Applicable Law”); or
+	3. rent, lease, lend, sell, assign, transfer, or otherwise make
+	available the Software to any third party.
 
 4. Disclaimers.
 
@@ -68,9 +68,9 @@ do not use the Software.
 	action, proceeding, or other claim (“Claims”) between a CZ Biohub
 	Protected Party and a third party arising out of or relating to
 	your actual or alleged
-		1. failure to comply with this Agreement, 
-		2. use of the Software, or 
-		3. liability for personal injury or damage to property.
+	1. failure to comply with this Agreement, 
+	2. use of the Software, or 
+	3. liability for personal injury or damage to property.
 
 6. Limitation of Liability. 
 
@@ -107,13 +107,13 @@ do not use the Software.
 	You hereby grant to us a worldwide, royalty-free, sublicenseable,
 	transferrable, perpetual, irrevocable, right and permission to use
 	or incorporate into the Software
-		1. any suggestions, ideas, requests, or feedback and
-		2. any improvements, modifications or other changes to the
-			Software, in each case ((1) and (2), the “Improvements”)
-			that you, your sublicensees or agents make generally
-			publicly available or that are otherwise made available to
-			us and to use, modify, translate, distribute and sell the
-			Software with such Improvements.
+	1. any suggestions, ideas, requests, or feedback and
+	2. any improvements, modifications or other changes to the
+	Software, in each case ((1) and (2), the “Improvements”) that you,
+	your sublicensees or agents make generally publicly available or
+	that are otherwise made available to us and to use, modify,
+	translate, distribute and sell the Software with such
+	Improvements.
 
 9. Ownership of IP.
 
@@ -162,18 +162,22 @@ do not use the Software.
 	and U.S. International Traffic in Arms Regulations (“ITAR”). You
 	will not, directly or indirectly, export, re-export or download
 	the Software to, or allow or enable access to the Software by, any
-	of the following: (a) any individual, entity or location
-	prohibited by Applicable Law, including any U.S. sanctions program
-	or export controls; (b) anyone on the SDN List, the Denied Persons
-	List or Entity List or other export control lists; or (c) for any
-	purpose prohibited by Applicable Law. You represent and warrant
-	that (1) you are not located in or ordinarily resident in a
-	country that is subject to a U.S. Government embargo or
-	comprehensive sanctions, or that has been designated by the
-	U.S. Government as a “terrorist supporting” country; (2) you are
-	not listed on any U.S. Government list of prohibited or restricted
-	parties; and (3) no U.S. federal agency has otherwise suspended,
-	revoked or denied your export privileges.
+	of the following: 
+	1. any individual, entity or location prohibited by Applicable
+	Law, including any U.S. sanctions program or export controls;
+	2. anyone on the SDN List, the Denied Persons List or Entity List
+	or other export control lists; or
+	3. for any purpose prohibited by Applicable Law.
+	
+	You represent and warrant that 
+	1. you are not located in or ordinarily resident in a country that
+	is subject to a U.S. Government embargo or comprehensive
+	sanctions, or that has been designated by the U.S. Government as a
+	“terrorist supporting” country;
+	2. you are not listed on any U.S. Government list of prohibited or
+	restricted parties; and
+	3. no U.S. federal agency has otherwise suspended, revoked or
+	denied your export privileges.
 
 13. Severability.
 
