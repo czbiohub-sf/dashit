@@ -104,10 +104,26 @@ func getGuides(guidesFilename string) []*seq.Seq {
 
 	scanner := bufio.NewScanner(guidesFile)
 
-	// Skip metadata on first two lines of the guides file
+	// Validate that the first two lines contain the expected
+	// metadata, and if so skip them
 	scanner.Scan()
+	if !strings.HasPrefix(scanner.Text(), "Total number of reads:") {
+		fmt.Fprintf(os.Stderr, "FATAL ERROR: Expected guides file %s to " +
+			"begin with 'Total number of reads', is this file corrupted?\n",
+			guidesFilename)
+		os.Exit(1)
+	}
+
 	scanner.Scan()
 
+	if !strings.HasPrefix(scanner.Text(), "Site, Site index, Number of reads " +
+		"covered by site, cumulative number of reads covered") {
+		fmt.Fprintf(os.Stderr, "FATAL ERROR: Expected guides file %s to " +
+			"have a second line beginning with 'Site, Site index, ', is this " +
+			"file corrupted?\n")
+		os.Exit(1)
+	}
+	
 	guides := make([]*seq.Seq, 0, 50)
 
 	for scanner.Scan() {
