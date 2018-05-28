@@ -126,17 +126,33 @@ func getGuides(guidesFilename string) []*seq.Seq {
 	
 	guides := make([]*seq.Seq, 0, 50)
 
-	for scanner.Scan() {
-		newSeq, err := seq.NewSeq(seq.DNA, []byte(strings.Split(scanner.Text(), ",")[0]))
-		checkError(err)
-		guides = append(guides, newSeq)
+	forwardPAM := "GG"
 
-		if guides[len(guides)-1].Length() != 20 {
-			fmt.Fprintf(os.Stderr, "Expected a 20-mer guide in %s, got %s\n", os.Args[1], guides[len(guides)-1])
+	fmt.Fprintf(os.Stderr, "Scoring guides by looking for guides in %s " +
+		"preceeding an N%s PAM, or, the reverse complement of guides " +
+		"in %s succeeding the reverse complement of this PAM\n",
+		guidesFilename, forwardPAM, guidesFilename);
+
+	for scanner.Scan() {
+		// For each guide in the input, create all possible guide + PAM sites
+		baseGuide := strings.Split(scanner.Text(), ",")[0]
+
+		for _, s := range [4]string{"A", "T", "C", "G"} {
+			newSeq, err := seq.NewSeq(seq.DNA, []byte(baseGuide + s + forwardPAM))
+			checkError(err)
+			guides = append(guides, newSeq)
+
+			guides = append(guides, newSeq.RevCom())
+		}
+		
+		if guides[len(guides)-1].Length() != 23 {
+			fmt.Fprintf(os.Stderr, "Expected a 20-mer guide + " +
+				"3-mer PAM in %s, got %s\n",
+				os.Args[1], guides[len(guides)-1])
 			os.Exit(-1)
 		}
 	}
-
+	
 	return guides
 }
 
@@ -201,7 +217,7 @@ func main() {
 	fmt.Fprintf(
 		os.Stdout,
 		"%d guides in %s vs. %s hit %d/%d = %.2f%%\n",
-		len(guides),
+		len(guides)/8,
 		guidesFilename,
 		fastaFilename,
 		readHits.getHits(),
