@@ -19,7 +19,7 @@ Installing =DASHit= requires:
 To install:
 
 #+BEGIN_SRC bash
-git clone https://github.com/czbiohub/guide_design_tools .
+git clone https://github.com/czbiohub/guide_design_tools
 cd guide_design_tools
 make install
 #+END_SRC
