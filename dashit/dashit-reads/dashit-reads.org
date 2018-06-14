@@ -3,12 +3,11 @@
 #+AUTHOR: David Dynerman
 #+EMAIL: david.dynerman@czbiohub.org
 #+OPTIONS:
-#+PROPERTY: header-args:python :noweb yes :tangle-mode (identity #o755)
 #+PROPERTY: header-args:org :exports results :results replace
 
 * Offtarget and quality filtering
 :PROPERTIES:
-:header-args:python: :tangle src/dashit-reads-filter.py
+:header-args:python: :tangle dashit_reads/dashit_reads_filter.py :noweb yes
 :END:
 #+NAME: doc:dashit-reads-filter
 #+BEGIN_SRC org
@@ -222,7 +221,7 @@ def parse_offtarget_server_response(response):
 
 ** Command line interface
 #+BEGIN_SRC python
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description='Filter guides in a '
                                      'sites-to-reads file based on offtargets '
                                      'and quality')
@@ -487,6 +486,9 @@ if __name__ == '__main__':
                 output_handle.write('candidate guide, why it was filtered out\n')
                 for guide in filtered_guides:
                     output_handle.write('{}, {}\n'.format(guide, filtered_guides[guide]))
+
+if __name__ == '__main__':
+    main()
 #+END_SRC
 
 

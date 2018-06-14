@@ -10,8 +10,7 @@ if [ ! -f $LICENSE_LOCATION ]; then
     less LICENSE.md 
     read -p "Please type 'I agree' to acknowledge that you have read the license ($EULA_VERSION) and accept the conditions: " AGREEMENT;
     if [[ "$AGREEMENT" == "i agree" ]]; then
-	mkdir $HOME/.config
-	mkdir $HOME/.config/czbiohub
+	mkdir -p $HOME/.config/czbiohub
 	echo "User $USER accepted the conditions in $EULA_VERSION on `date`" > $LICENSE_LOCATION
     else
 	(echo "You did not agree to the license, exiting."; exit 1;)

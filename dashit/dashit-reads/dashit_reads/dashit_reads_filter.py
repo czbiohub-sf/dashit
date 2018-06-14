@@ -1,5 +1,13 @@
 """
-<<doc:dashit-reads-filter>>
+DASHit-reads-filter: Filter candidate guides for offtarget and quality.
+
+Given an offtarget file and quality parameters, remove candidate
+guides from a sites-to-reads file that hit offtargets or are of low
+quality.
+
+=DASHit-reads= performs offtarget and quality filtering on the
+sites-to-reads file (output of =crispr_sites -r=): it simply removes
+lines from this file that match offtargets or have low quality.
 """
 import argparse
 import logging
@@ -23,7 +31,16 @@ logging.basicConfig(level=logging.INFO)
 
 def filter_sites_poor_structure(sequences, filtered_sites, filter_parms):
     """
-    <<doc:filter_sites_poor_structure>>
+    Filter CRISPR sites due to poor structural reasons.
+    
+    A site will be removed if any of the following are true:
+    
+    1. G/C frequency too high (> 15/20) or too low (< 5/20)
+    2. /Homopolymer/: more than 5 consecutive repeated nucleotides
+    3. /Dinucleotide repeats/: the same two nucelotides alternate for > 3
+       repeats
+    4. /Hairpin/: complementary subsequences near the start and end of a
+       site can bind, causing a hairpin
 
     Parameters
     ----------
@@ -48,7 +65,7 @@ def filter_sites_poor_structure(sequences, filtered_sites, filter_parms):
 
 def launch_offtarget_server(offtarget_filename):
     """
-    <<doc:launch_offtarget_server>>
+    Launch the off target filtering server.
 
     Parameters
     ----------
@@ -89,7 +106,7 @@ def launch_offtarget_server(offtarget_filename):
 
 def check_offtarget_alive(offtarget_proc):
     """
-    <<doc:check_offtarget_alive>>
+    Check that the offtarget server process is running. Log errors if not.
 
     Parameters
     ----------
@@ -116,7 +133,8 @@ def check_offtarget_alive(offtarget_proc):
 
 def parse_offtarget_server_response(response):
     """
-    <<doc:parse_offtarget_server_response>>
+    Parse the HTTP request returned from the off target server and return
+    which CRISPR sites were filtered.
 
     Parameters
     ----------
@@ -142,7 +160,7 @@ def parse_offtarget_server_response(response):
 
     return offtargets
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description='Filter guides in a '
                                      'sites-to-reads file based on offtargets '
                                      'and quality')
@@ -286,7 +304,7 @@ if __name__ == '__main__':
         log.info('Launching ontarget filtering server')
         ontarget_proc = launch_offtarget_server(args.ontarget)
 
-        # Catch SIGTERM/SIGINT to shutdown the offtarget server
+        b# Catch SIGTERM/SIGINT to shutdown the offtarget server
         def ontarget_handler(signal, frame):
             global ontarget_proc
             log.info('Killing ontarget server')
@@ -407,3 +425,6 @@ if __name__ == '__main__':
                 output_handle.write('candidate guide, why it was filtered out\n')
                 for guide in filtered_guides:
                     output_handle.write('{}, {}\n'.format(guide, filtered_guides[guide]))
+
+if __name__ == '__main__':
+    main()

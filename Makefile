@@ -6,6 +6,8 @@ EXAMPLE_OUTPUT_DIR = ${DATA_DIR}/DASHit-example-output
 VENDOR_DIR = vendor
 SPECIAL_OPS_REPO = git@github.com:czbiohub/special_ops_crispr_tools.git
 SPECIAL_OPS_DIR = special_ops_crispr_tools
+BIN_DIR = ${HOME}/bin
+
 
 SEQTK := $(shell command -v seqtk 2> /dev/null)
 
@@ -13,13 +15,14 @@ get-vendor-deps:
 	rm -rf $(VENDOR_DIR)/$(SPECIAL_OPS_DIR)
 	git clone $(SPECIAL_OPS_REPO) $(VENDOR_DIR)/$(SPECIAL_OPS_DIR)
 
-build-components: build-optimize-guides build-score-guides build-special-ops-crispr-tools
-
-build-optimize-guides:
-	cd dashit && go build -o optimize_guides
+build-components: build-score-guides build-special-ops-crispr-tools
 
 build-score-guides:
 	cd misc && go build -o score_guides
+
+install-score-guides:
+	mkdir -p $(BIN_DIR)
+	cp misc/score_guides $(BIN_DIR)
 
 build-special-ops-crispr-tools:
 	cd $(VENDOR_DIR)/$(SPECIAL_OPS_DIR) && $(MAKE)
@@ -33,10 +36,12 @@ check-license-agreement:
 install: check-license-agreement check-basic-deps
 	$(MAKE) install-components
 
-install-components: get-vendor-deps build-components install-dashit
+install-components: get-vendor-deps build-components install-dashit install-score-guides
 
 install-dashit:
 	cd dashit && $(MAKE)
+	mkdir -p $(BIN_DIR)
+	cp dashit/optimize_guides $(BIN_DIR)
 
 test:
 	cd misc && go test -v
