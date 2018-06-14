@@ -1,5 +1,4 @@
-**DRAFT 5.3.18**
-**CONFIDENTIAL**
+Chan Zuckerberg Biohub End User License Agreement (EULA) May 2018
 
 © 2018 [Chan Zuckerberg Biohub](https://www.czbiohub.org)
 
