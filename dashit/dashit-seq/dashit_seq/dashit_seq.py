@@ -10,12 +10,14 @@ optimally covering the input while avoiding off targets.
 2. guides aren't spaced too closely, e.g. no closer than 50bp
 """
 import argparse
+from ash import flash
 import pysam
 import logging
 import os
 import subprocess
 import fcntl
 import time
+from ash import filter_offtarget
 import sys
 import signal
 from datetime import datetime
@@ -25,11 +27,8 @@ from Bio import SeqIO
 from Bio import SeqRecord
 from Bio.Seq import Seq
 from ortools.linear_solver import pywraplp
-from pathlib import Path
-
-from ash import flash
-from ash import filter_offtarget_2 as filter_offtarget
 from ash.common import Gene, Target
+from pathlib import Path
 from ash.build import fetch_with_retries
 
 from collections import defaultdict
@@ -48,9 +47,9 @@ def initialize_solver(sequences, filtered_sites):
     Parameters
     ----------
     sequences : list of `Gene`
-        input sequences that we're designing guides format
+	input sequences that we're designing guides format
     filtered_sites : dict
-        CRISPR sites to ignore in optimization (e.g., offtargets)
+	CRISPR sites to ignore in optimization (e.g., offtargets)
 
     Returns
     -------
@@ -64,7 +63,7 @@ def initialize_solver(sequences, filtered_sites):
     """
 
     solver = pywraplp.Solver('SolveIntegerProblem',
-                             pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
+			     pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
 
     objective = solver.Objective()
 
@@ -91,27 +90,27 @@ def initialize_solver(sequences, filtered_sites):
     return solver, site_variables, sites_to_targets
 
 def add_spacing_constraints(sequences, solver, site_variables, filtered_sites,
-                            min_spacing, max_spacing):
+			    min_spacing, max_spacing):
     """
     Add minimum & maximum separation constraints to cover sequences
     without bunching up.
-
+    
     Adds constraints to the provided solver instance.
 
     Parameters
     ----------
     sequences : list of `Gene`
-        sequences we wish to cover with CRISPR sites
+	sequences we wish to cover with CRISPR sites
     solver : `ortools.linear_solver.pywraplp.Solver`
-        initialized solver, as returned from `initialize_solver`
+	initialized solver, as returned from `initialize_solver`
     site_variables : list
-        optimization solver variables, as returned from `initialize_solver`
+	optimization solver variables, as returned from `initialize_solver`
     filtered_sites : dict
-        CRISPR sites that should be ignored for optimization, e.g. offtargets
+	CRISPR sites that should be ignored for optimization, e.g. offtargets
     min_spacing, max_spacing : int
-        ensure at least `min_spacing` between selected guides, and
-        ensure that at least one guide appears in every window of
-        width `max_spacing`
+	ensure at least `min_spacing` between selected guides, and
+	ensure that at least one guide appears in every window of
+	width `max_spacing`
 
     Returns
     -------
@@ -167,24 +166,24 @@ def filter_sites_offtarget(sequences, filtered_sites, filter_radius):
     """
     Takes a list of sequences with identified CRISPR targets and filters
     those that are offtarget.
-
+    
     This function adds off target CRISPR sites to =filtered_sites=.
 
     Parameters
     ----------
     sequences : list of `common.Gene`
-        the input sequences with CRISPR sites identified
+	the input sequences with CRISPR sites identified
     filtered_sites : dict
-        dict containing which sites have been filtered
+	dict containing which sites have been filtered
     filter_radius : str
-        string of the form L_M_N where L, M, N are the number of
-        required matches in the first 5, 10 and 20 positions to
-        declare a CRISPR site offtarget
+	string of the form L_M_N where L, M, N are the number of
+	required matches in the first 5, 10 and 20 positions to
+	declare a CRISPR site offtarget
     """
 
     log.info('filtering offtarget CRISPR sites from {} input '
-             'sequences with radius {}'.format(len(sequences),
-                                               filter_radius))
+	     'sequences with radius {}'.format(len(sequences),
+					       filter_radius))
 
     # We may have duplicates in this list, if a single CRISPR site
     # occurs multiple times in the input sequences
@@ -199,7 +198,7 @@ def filter_sites_offtarget(sequences, filtered_sites, filter_radius):
     offtargets = parse_offtarget_server_response(results)
 
     log.info('removed {} sites from consideration because they hit off '
-             'targets'.format(len(offtargets)))
+	     'targets'.format(len(offtargets)))
 
     for site in offtargets:
         filtered_sites[site] = "offtarget"
@@ -207,9 +206,9 @@ def filter_sites_offtarget(sequences, filtered_sites, filter_radius):
 def filter_sites_poor_structure(sequences, filtered_sites, filter_parms):
     """
     Filter CRISPR sites due to poor structural reasons.
-
+    
     A site will be removed if any of the following are true:
-
+    
     1. G/C frequency too high (> 15/20) or too low (< 5/20)
     2. /Homopolymer/: more than 5 consecutive repeated nucleotides
     3. /Dinucleotide repeats/: the same two nucelotides alternate for > 3
@@ -220,16 +219,16 @@ def filter_sites_poor_structure(sequences, filtered_sites, filter_parms):
     Parameters
     ----------
     sequences : list of `common.Gene`
-        the input sequences with CRISPR targets identified
+	the input sequences with CRISPR targets identified
     filtered_sites : dict
-        dict containing which sites have been filtered
+	dict containing which sites have been filtered
     filter_parms : dict
-        parameters controlling poor structure filtering,
-        see `flash.poor_structure`
+	parameters controlling poor structure filtering,
+	see `flash.poor_structure`
     """
 
     log.info('filtering sites for poor structure '
-             'with parms {}'.format(filter_parms))
+	     'with parms {}'.format(filter_parms))
 
     initial_num_filtered = len(filtered_sites)
 
@@ -240,7 +239,7 @@ def filter_sites_poor_structure(sequences, filtered_sites, filter_parms):
                 filtered_sites[target[0]] = "; ".join(reasons)
 
     log.info('removed {} sites from consideration due to poor '
-             'structure'.format(len(filtered_sites) - initial_num_filtered))
+	     'structure'.format(len(filtered_sites) - initial_num_filtered))
 
 def parse_offtarget_server_response(response):
     """
@@ -250,8 +249,8 @@ def parse_offtarget_server_response(response):
     Parameters
     ----------
     response : dict
-        response from offtarget server, as returned by
-        `filter_offtarget.fetch_all_offtargets`
+	response from offtarget server, as returned by
+	`filter_offtarget.fetch_all_offtargets`
 
     Returns
     -------
@@ -278,8 +277,8 @@ def launch_offtarget_server(offtarget_filename):
     Parameters
     ----------
     offtarget_filename : str
-        filename containing off target CRISPR sites, as generated by
-        `special_ops_crispr_tools/crispr_sites`
+	filename containing off target CRISPR sites, as generated by
+	`special_ops_crispr_tools/crispr_sites`
 
     Returns
     -------
@@ -319,7 +318,7 @@ def check_offtarget_alive(offtarget_proc):
     Parameters
     ----------
     offtarget_proc : `subprocess.Popen`
-        offtarget server process, as returned by `launch_offtarget_server`
+	offtarget server process, as returned by `launch_offtarget_server`
 
     Returns
     -------
@@ -335,9 +334,9 @@ def check_offtarget_alive(offtarget_proc):
         log.error('offtarget server exited unexpectedly with code '
                   '{}\n\n'.format(offtarget_proc.returncode))
 
-        # outs, errs = offtarget_proc.communicate()
-        # log.error('off_target stdout:\n\n{}\n\n'.format(outs.decode()))
-        # log.error('off_target stderr:\n\n{}\n\n'.format(errs.decode()))
+	# outs, errs = offtarget_proc.communicate()
+	# log.error('off_target stdout:\n\n{}\n\n'.format(outs.decode()))
+	# log.error('off_target stderr:\n\n{}\n\n'.format(errs.decode()))
 
         return None
     else:
@@ -350,7 +349,7 @@ def check_offtarget_ready(offtarget_proc):
     Parameters
     ----------
     offtarget_proc : `subprocess.Popen`
-        offtarget server process, as returned by `launch_offtarget_server`
+	offtarget server process, as returned by `launch_offtarget_server`
 
     Returns
     -------
@@ -388,7 +387,7 @@ def read_sequences_from_file(filename):
     Parameters
     ----------
     filename : str
-        input filename, FASTA format
+	input filename, FASTA format
 
     Returns
     -------
@@ -421,185 +420,3 @@ def read_sequences_from_file(filename):
 
         sequences.append(new_sequence)
     return sequences
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Guide design by covering an '
-                                     'input sequence')
-
-    parser.add_argument('input', type=str, help='input sequence to cover with '
-                        'guides, FASTA format')
-
-    parser.add_argument('--min_spacing', type=int, default=50,
-                        help='Space guides no closer than this')
-
-    parser.add_argument('--max_spacing', type=int, default=200,
-                        help='Ensure at least one guide in every window of '
-                        'this size')
-
-    parser.add_argument('--offtarget', type=str,
-                        help='File containing off target CRISPR sites, as '
-                        'generated by crispr_sites')
-
-    parser.add_argument('--offtarget_radius', type=str, default='5_10_20',
-                        help='Radius used for matching an off target. Specify '
-                        'this as L_M_N which means filter a guide for hitting '
-                        'an off target if L, M, N nucleotides in the first 5, '
-                        '10 and 20 positions of the guide, respectively, match '
-                        'the off target. e.g., 5_10_20 to require perfect '
-                        'matches; 5_9_18 to allow one mismatch in positions '
-                        '6-10 positions and to allow 2 mismatches in the last '
-                        '10 positions')
-
-
-    filtering_group = parser.add_argument_group('filtering options',
-                                                'these options control how '
-                                                'guides are filtered for poor '
-                                                'structure reasons')
-
-    filtering_group.add_argument('--gc_freq_min', type=int, default=5,
-                                 help='filter guide if # of Gs or Cs is '
-                                 'strictly less than this number')
-
-    filtering_group.add_argument('--gc_freq_max', type=int, default=15,
-                                 help='filter guide if # of Gs or Cs is '
-                                 'strictly greater than this number')
-
-    filtering_group.add_argument('--homopolymer', type=int, default=5,
-                                 help='filter guide if strictly more than '
-                                 'this number of a single consecutive '
-                                 'nucleotide appears, e.g., AAAAA')
-
-    filtering_group.add_argument('--dinucleotide_repeats', type=int, default=3,
-                                 help='filter guide if strictly more than '
-                                 'this number of a single dinucleotide repeats '
-                                 'occur, e.g. ATATAT')
-
-    filtering_group.add_argument('--hairpin_min_inner', type=int, default=3,
-                                 help='filter guide if a hairpin occurs with >='
-                                 'this inner hairpin spacing, e.g., '
-                                 'oooooIIIooooo, where the o are reverse '
-                                 'complements and III is the inner hairpin '
-                                 'spacing')
-
-    filtering_group.add_argument('--hairpin_min_outer', type=int, default=5,
-                                 help='filter guide if a hairpin occurs with >='
-                                 'this outer hairpin width, e.g., '
-                                 'oooooIIIooooo, where the o are reverse '
-                                 'complements and ooooo is the outer hairpin')
-
-
-    start_time = datetime.now()
-
-    args = parser.parse_args()
-
-    filter_parms = { 'gc_frequency': (args.gc_freq_min, args.gc_freq_max),
-                     'homopolymer': args.homopolymer,
-                     'dinucleotide_repeats': args.dinucleotide_repeats,
-                     'hairpin': { 'min_inner': args.hairpin_min_inner,
-                                  'min_outer': args.hairpin_min_outer } }
-
-    if args.offtarget is not None:
-        offtarget_proc = launch_offtarget_server(args.offtarget)
-
-        # Catch SIGTERM/SIGINT to shutdown the offtarget server
-        def handler(signal, frame):
-            global offtarget_proc
-            offtarget_proc.kill()
-            sys.exit(1)
-
-        signal.signal(signal.SIGINT, handler)
-        signal.signal(signal.SIGTERM, handler)
-    else:
-        offtarget_proc = None
-
-    input_sequences = read_sequences_from_file(args.input)
-
-    # Check/wait that offtarget server has started
-    if args.offtarget is not None:
-        try:
-            log.info("Poking offtarget server.  Timeout 30 seconds.")
-            fetch_with_retries(["ACGT" * 5], 5, 9, 18, max_attempts=10, timeout=30)
-            log.info("Offtarget server is alive.")
-        except:
-            log.error('Error starting offtarget server, see messages above')
-            sys.exit(-1)
-
-    # This dictionary contains CRISPR sites that will be disregarded
-    # during guide optimization, e.g. because they hit offtargets
-    filtered_sites = {}
-
-    if args.offtarget is not None:
-        filter_sites_offtarget(input_sequences, filtered_sites, args.offtarget_radius)
-
-        log.info('Done with offtarget server, shutting it down')
-        offtarget_proc.terminate()
-
-    filter_sites_poor_structure(input_sequences, filtered_sites, filter_parms)
-
-    log.info('Initializing optimization problem')
-
-    solver, site_variables, sites_to_targets = initialize_solver(input_sequences, filtered_sites)
-
-    constraints = add_spacing_constraints(input_sequences, solver,
-                                          site_variables, filtered_sites,
-                                          args.min_spacing,
-                                          args.max_spacing)
-
-    log.info('Solving optimization problem')
-    result_status = solver.Solve()
-    log.info('Solver completed')
-    library = []
-
-    for site in site_variables:
-        if site_variables[site].solution_value() == 1:
-            library.append(site)
-
-    print('DASHit-seq {}'.format(__version__))
-    print('Running on, {}'.format(gethostname()))
-    print('Input sequence, {}'.format(Path(args.input).resolve()))
-    if args.offtarget is not None:
-        print('Off-target file, {}'.format(Path(args.offtarget).resolve()))
-    else:
-        print('Off-target file, Not specified')
-
-    end_time = datetime.now()
-
-    print('Run start, {}'.format(start_time))
-    print('Run end, {}'.format(end_time))
-    print('Run duration, {}'.format(end_time - start_time))
-
-    if (result_status == pywraplp.Solver.OPTIMAL or
-        result_status == pywraplp.Solve.FEASIBLE):
-
-        if result_status == pywraplp.Solver.OPTIMAL:
-            print('Solution is OPTIMAL')
-        else:
-            print('Solution may be SUB-OPTIMAL')
-
-        print('Designed CRISPR guides, Guide targets')
-
-        for site in library:
-            print(site + ', ' + "; ".join(["{}: {}".format(t[0].name, t[1][1]) for t in sites_to_targets[site]]))
-
-        print('\n\nCRISPR guides that were removed from consideration')
-
-        print('CRISPR site, why it was excluded')
-
-        for site in filtered_sites:
-            print('{}, {}'.format(site, filtered_sites[site]))
-
-        # Write a simple BED file showing where the library will hit
-        # the input sequence
-        base_name = os.path.splitext(os.path.split(args.input)[-1])[-2]
-        with open(base_name + '_guides.bed', 'w') as output:
-            for sequence in input_sequences:
-                for target in sequence.targets:
-                    if target[0] in library:
-                        output.write('{}\t{}\t{}\n'.format(sequence.name,
-                                                           target[1] - 17,
-                                                           target[1] + 3))
-            log.info('Wrote guide locations to {} for '
-                     'visualization'.format(base_name + '_guides.bed'))
-
-    else:
-        print('Optimal solution could not be found')

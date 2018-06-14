@@ -3,7 +3,7 @@
 #+AUTHOR: David Dynerman
 #+EMAIL: david.dynerman@czbiohub.org
 #+OPTIONS:
-#+PROPERTY: header-args:python :tangle "src/dashit-seq.py" :noweb yes :tangle-mode (identity #o755)
+#+PROPERTY: header-args:python :tangle "dashit_seq/dashit_seq.py" :noweb yes :tangle-mode (identity #o755)
 #+PROPERTY: header-args:org :exports results :results replace
 
 #+NAME: doc:dashit-seq
@@ -24,14 +24,14 @@ optimally covering the input while avoiding off targets.
 <<doc:dashit-seq>>
 """
 import argparse
-import flash
+from ash import flash
 import pysam
 import logging
 import os
 import subprocess
 import fcntl
 import time
-import filter_offtarget
+from ash import filter_offtarget
 import sys
 import signal
 from datetime import datetime
@@ -41,9 +41,9 @@ from Bio import SeqIO
 from Bio import SeqRecord
 from Bio.Seq import Seq
 from ortools.linear_solver import pywraplp
-from common import Gene, Target
+from ash.common import Gene, Target
 from pathlib import Path
-from build import fetch_with_retries
+from ash.build import fetch_with_retries
 
 from collections import defaultdict
 
@@ -136,12 +136,12 @@ unique-ify the the target list.
     sites_to_targets = defaultdict(list)
 
     for gene in sequences:
-	for target_seq, target_loc in gene.targets:
-	    if target_seq in filtered_sites:
-		continue
-	    if target_seq not in sites_to_targets:
-		sites_to_targets[target_seq].append((gene, (target_seq,
-							    target_loc)))
+        for target_seq, target_loc in gene.targets:
+            if target_seq in filtered_sites:
+                continue
+            if target_seq not in sites_to_targets:
+                sites_to_targets[target_seq].append((gene, (target_seq,
+                                                            target_loc)))
 
     site_variables = {}
 #+END_SRC
@@ -151,10 +151,10 @@ objective, as Equation $\eqref{objective}$.
 
 #+BEGIN_SRC python
     for i, target_seq in enumerate(sites_to_targets):
-	if target_seq in filtered_sites:
-	    continue
-	site_variables[target_seq] = solver.IntVar(0, 1, 'x_{}'.format(i))
-	objective.SetCoefficient(site_variables[target_seq], 1)
+        if target_seq in filtered_sites:
+            continue
+        site_variables[target_seq] = solver.IntVar(0, 1, 'x_{}'.format(i))
+        objective.SetCoefficient(site_variables[target_seq], 1)
 
     objective.SetMinimization()
 
@@ -210,39 +210,43 @@ def add_spacing_constraints(sequences, solver, site_variables, filtered_sites,
     spacing_constraints = set()
 
     for sequence in sequences:
-	for i, (seq, cut_loc) in enumerate(sequence.targets):
-	    if seq in filtered_sites:
-		continue
+        for i, (seq, cut_loc) in enumerate(sequence.targets):
+            if seq in filtered_sites:
+                continue
 
-	    nearby_targets = [ s for s, l in sequence.targets if l != cut_loc and
-			       not (s in filtered_sites) and
-			       abs(l - cut_loc) < min_spacing ]
+            nearby_targets = [ s for s, l in sequence.targets if l != cut_loc and
+                               not (s in filtered_sites) and
+                               abs(l - cut_loc) < min_spacing ]
 
-	    if len(nearby_targets) > 0:
-		spacing_constraints.add(tuple(s for s in
-					      nearby_targets + [seq]))
+            if len(nearby_targets) > 0:
+                spacing_constraints.add(tuple(s for s in
+                                              nearby_targets + [seq]))
 
-	    nearby_targets = [ s for s, l in sequence.targets if l != cut_loc and
-			       not (s in filtered_sites) and
-			       abs(l - cut_loc) < max_spacing ]
+            nearby_targets = [ s for s, l in sequence.targets if l != cut_loc and
+                               not (s in filtered_sites) and
+                               abs(l - cut_loc) < max_spacing ]
 
-	    if len(nearby_targets) > 0:
-		coverage_constraints.add(tuple(s for s in
-					       nearby_targets + [seq]))
+            if len(nearby_targets) > 0:
+                coverage_constraints.add(tuple(s for s in
+                                               nearby_targets + [seq]))
 #+END_SRC
+
+#+RESULTS:
+: None
+
 Add constraints according to Equation $\eqref{min_con}$.
 #+BEGIN_SRC python
     for constraint in spacing_constraints:
-	new_constraint = solver.Constraint(0, 1)
-	for site in constraint:
-	    new_constraint.SetCoefficient(site_variables[site], 1)
+        new_constraint = solver.Constraint(0, 1)
+        for site in constraint:
+            new_constraint.SetCoefficient(site_variables[site], 1)
 #+END_SRC
 Add constraints according to Equation $\eqref{max_con}$.
 #+BEGIN_SRC python
     for constraint in coverage_constraints:
-	new_constraint = solver.Constraint(1, solver.Infinity())
-	for site in constraint:
-	    new_constraint.SetCoefficient(site_variables[site], 1)
+        new_constraint = solver.Constraint(1, solver.Infinity())
+        for site in constraint:
+            new_constraint.SetCoefficient(site_variables[site], 1)
 
     return spacing_constraints, coverage_constraints
 #+END_SRC
@@ -289,8 +293,8 @@ def filter_sites_offtarget(sequences, filtered_sites, filter_radius):
     all_targets = []
 
     for sequence in sequences:
-	for target in sequence.targets:
-	    all_targets.append(target[0])
+        for target in sequence.targets:
+            all_targets.append(target[0])
 #+END_SRC
 
 The second argument to =filter_offtarget.fetch_all_offtargets=
@@ -310,7 +314,7 @@ the last 10 letters of the site, etc.
 	     'targets'.format(len(offtargets)))
 
     for site in offtargets:
-	filtered_sites[site] = "offtarget"
+        filtered_sites[site] = "offtarget"
 #+END_SRC
 
 ** =filter_sites_poor_structure=
@@ -350,10 +354,10 @@ def filter_sites_poor_structure(sequences, filtered_sites, filter_parms):
     initial_num_filtered = len(filtered_sites)
 
     for sequence in sequences:
-	for target in sequence.targets:
-	    reasons = flash.poor_structure(target[0], True, filter_parms)
-	    if len(reasons) > 0:
-		filtered_sites[target[0]] = "; ".join(reasons)
+        for target in sequence.targets:
+            reasons = flash.poor_structure(target[0], True, filter_parms)
+            if len(reasons) > 0:
+                filtered_sites[target[0]] = "; ".join(reasons)
 
     log.info('removed {} sites from consideration due to poor '
 	     'structure'.format(len(filtered_sites) - initial_num_filtered))
@@ -406,10 +410,10 @@ def parse_offtarget_server_response(response):
     offtargets = defaultdict(bool)
 
     for radius in response:
-	for r in response[radius]:
-	    for line in r.text.split('\n'):
-		if line[-4:] == 'true':
-		    offtargets[line[0:20]] = True
+        for r in response[radius]:
+            for line in r.text.split('\n'):
+                if line[-4:] == 'true':
+                    offtargets[line[0:20]] = True
 
     return offtargets
 #+END_SRC
@@ -448,9 +452,9 @@ def launch_offtarget_server(offtarget_filename):
     proc = check_offtarget_alive(proc)
 
     if proc is None:
-	log.error('Error launching offtarget. Is offtarget in your path? '
-		  'Is {} an off target CRISPR sites file generated by '
-		  'crispr_sites?'.format(Path(offtarget_filename).resolve()))
+        log.error('Error launching offtarget. Is offtarget in your path? '
+                  'Is {} an off target CRISPR sites file generated by '
+                  'crispr_sites?'.format(Path(offtarget_filename).resolve()))
 
     # Set the offtarget's  stdout and stderr to  non-blocking reads so
     # we can check in on them
@@ -489,19 +493,19 @@ def check_offtarget_alive(offtarget_proc):
     """
 
     if offtarget_proc is None:
-	return None
+        return None
 
     if offtarget_proc.poll() is not None:
-	log.error('offtarget server exited unexpectedly with code '
-		  '{}\n\n'.format(offtarget_proc.returncode))
+        log.error('offtarget server exited unexpectedly with code '
+                  '{}\n\n'.format(offtarget_proc.returncode))
 
 	# outs, errs = offtarget_proc.communicate()
 	# log.error('off_target stdout:\n\n{}\n\n'.format(outs.decode()))
 	# log.error('off_target stderr:\n\n{}\n\n'.format(errs.decode()))
 
-	return None
+        return None
     else:
-	return offtarget_proc
+        return offtarget_proc
 #+END_SRC
 
 *** =check_offtarget_ready=
@@ -531,21 +535,21 @@ def check_offtarget_ready(offtarget_proc):
     offtarget_proc = check_offtarget_alive(offtarget_proc)
 
     if offtarget_proc is None:
-	return None
+        return None
 
     while True:
-	line = offtarget_proc.stderr.readline()
+        line = offtarget_proc.stderr.readline()
 
-	if line != b'':
-	    print(line)
-	    if 'starting server' in line.decode():
-		log.info('offtarget server ready and waiting')
-		# Disable the subprocess' STDOUT and STDERR to prevent
-		# it from deadlocking by writing too much to stdout
-		# that doesn't get read
-		return True
-	else:
-	    break
+        if line != b'':
+            print(line)
+            if 'starting server' in line.decode():
+                log.info('offtarget server ready and waiting')
+                # Disable the subprocess' STDOUT and STDERR to prevent
+                # it from deadlocking by writing too much to stdout
+                # that doesn't get read
+                return True
+        else:
+            break
 
     return False
 #+END_SRC
@@ -579,31 +583,31 @@ def read_sequences_from_file(filename):
     sequences = []
 
     for i, sequence in enumerate(input_sequences):
-	if i >= 1:
-	    raise NotImplementedError('Input sequence file can only contain a '
-				      'single sequence')
+        if i >= 1:
+            raise NotImplementedError('Input sequence file can only contain a '
+                                      'single sequence')
 
-	new_sequence = Gene('Input Sequence {}'.format(i))
-	new_sequence.name = sequence.name
-	new_sequence.seq = sequence.seq
-	new_sequence.targets = []
+        new_sequence = Gene('Input Sequence {}'.format(i))
+        new_sequence.name = sequence.name
+        new_sequence.seq = sequence.seq
+        new_sequence.targets = []
 
-	for i in flash.kmers_range(new_sequence.seq, 23):
-	    if 'G' == new_sequence.seq[i+21] == new_sequence.seq[i+22]:
-		new_sequence.targets.append(
-		    Target(flash.forward_20mer_at(new_sequence.seq, i, 'F'),
-			   flash.cut_location((i, 'F'))))
-	    if 'C' == sequence.seq[i] == sequence.seq[i+1]:
-		new_sequence.targets.append(
-		    Target(flash.forward_20mer_at(new_sequence.seq, i, 'R'),
-			   flash.cut_location((i, 'R'))))
+        for i in flash.kmers_range(new_sequence.seq, 23):
+            if 'G' == new_sequence.seq[i+21] == new_sequence.seq[i+22]:
+                new_sequence.targets.append(
+                    Target(flash.forward_20mer_at(new_sequence.seq, i, 'F'),
+                           flash.cut_location((i, 'F'))))
+            if 'C' == sequence.seq[i] == sequence.seq[i+1]:
+                new_sequence.targets.append(
+                    Target(flash.forward_20mer_at(new_sequence.seq, i, 'R'),
+                           flash.cut_location((i, 'R'))))
 
-	sequences.append(new_sequence)
+        sequences.append(new_sequence)
     return sequences
 #+END_SRC
 
 
-* Command line interface
+* COMMENT Command line interface
 #+BEGIN_SRC python
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Guide design by covering an '
@@ -676,54 +680,36 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     filter_parms = { 'gc_frequency': (args.gc_freq_min, args.gc_freq_max),
-
-<<<<<<< HEAD:dashit/dashit-seq.org
-		     'homopolymer': args.homopolymer,
-		     'dinucleotide_repeats': args.dinucleotide_repeats,
-		     'hairpin': { 'min_inner': args.hairpin_min_inner,
-				  'min_outer': args.hairpin_min_outer } }
-=======
-		     'homopolymer': args.homopolymer,
-		     'dinucleotide_repeats': args.dinucleotide_repeats,
-		     'hairpin': { 'min_inner': args.hairpin_min_inner,
-				  'min_outer': args.hairpin_min_outer } }
->>>>>>> Basic testing for score guides.:dashit/dashit-seq/docs/dashit-seq.org
+                     'homopolymer': args.homopolymer,
+                     'dinucleotide_repeats': args.dinucleotide_repeats,
+                     'hairpin': { 'min_inner': args.hairpin_min_inner,
+                                  'min_outer': args.hairpin_min_outer } }
 
     if args.offtarget is not None:
-	offtarget_proc = launch_offtarget_server(args.offtarget)
+        offtarget_proc = launch_offtarget_server(args.offtarget)
 
 	# Catch SIGTERM/SIGINT to shutdown the offtarget server
-	def handler(signal, frame):
-	    global offtarget_proc
-	    offtarget_proc.kill()
-	    sys.exit(1)
+        def handler(signal, frame):
+            global offtarget_proc
+            offtarget_proc.kill()
+            sys.exit(1)
 
-	signal.signal(signal.SIGINT, handler)
-	signal.signal(signal.SIGTERM, handler)
+        signal.signal(signal.SIGINT, handler)
+        signal.signal(signal.SIGTERM, handler)
     else:
-	offtarget_proc = None
+        offtarget_proc = None
 
     input_sequences = read_sequences_from_file(args.input)
 
     # Check/wait that offtarget server has started
     if args.offtarget is not None:
-<<<<<<< HEAD:dashit/dashit-seq.org
-	try:
-	    log.info("Poking offtarget server.  Timeout 30 seconds.")
-	    fetch_with_retries(["ACGT" * 5], 5, 9, 18, max_attempts=10, timeout=30)
-	    log.info("Offtarget server is alive.")
+        try:
+            log.info("Poking offtarget server.  Timeout 10 seconds.")
+            fetch_with_retries(["ACGT" * 5], 5, 9, 18, max_attempts=5, timeout=10)
+            log.info("Offtarget server is alive.")
 	except:
-	    log.error('Error starting offtarget server, see messages above')
-	    sys.exit(-1)
-=======
-	try:
-	    log.info("Poking offtarget server.  Timeout 10 seconds.")
-	    fetch_with_retries(["ACGT" * 5], 5, 9, 18, max_attempts=5, timeout=10)
-	    log.info("Offtarget server is alive.")
-	except:
-	    log.error('Error starting offtarget server, see messages above')
-	    sys.exit(-1)
->>>>>>> Basic testing for score guides.:dashit/dashit-seq/docs/dashit-seq.org
+            log.error('Error starting offtarget server, see messages above')
+            sys.exit(-1)
 
     # This dictionary contains CRISPR sites that will be disregarded
     # during guide optimization, e.g. because they hit offtargets
@@ -804,3 +790,5 @@ if __name__ == '__main__':
     else:
 	print('Optimal solution could not be found')
 #+END_SRC
+
+#+RESULTS:
