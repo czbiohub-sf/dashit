@@ -9,6 +9,21 @@
    existing sequencing reads, or based on an explicitly provided
    target sequence.
 
+* Installation
+Installing =DASHit= requires:
+
+1. =g++=
+2. =go=
+3. =python3=
+
+To install:
+
+#+BEGIN_SRC bash
+git clone https://github.com/czbiohub/guide_design_tools .
+cd guide_design_tools
+make install
+#+END_SRC
+
 * License
 For *academic* and *non-profit* uses, =guide_design_tools= is free to use
 and modify. You must read and agree to the [[./LICENSE.md][LICENSE.md]] before using
