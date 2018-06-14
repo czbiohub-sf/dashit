@@ -4,7 +4,7 @@ EXAMPLE_DASH_READS_DIR = ${DATA_DIR}/DASHit-reads
 EXAMPLE_DASH_SEQ_DIR = ${DATA_DIR}/DASHit-seq
 EXAMPLE_OUTPUT_DIR = ${DATA_DIR}/DASHit-example-output
 VENDOR_DIR = vendor
-SPECIAL_OPS_REPO = git@github.com:czbiohub/special_ops_crispr_tools.git
+SPECIAL_OPS_REPO = https://github.com/czbiohub/special_ops_crispr_tools.git
 SPECIAL_OPS_DIR = special_ops_crispr_tools
 BIN_DIR = ${HOME}/bin
 
