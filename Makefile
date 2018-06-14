@@ -39,7 +39,7 @@ install: check-license-agreement check-basic-deps
 install-components: get-vendor-deps build-components install-dashit install-score-guides
 
 install-dashit:
-	cd dashit && $(MAKE)
+	cd dashit && $(MAKE) install
 	mkdir -p $(BIN_DIR)
 	cp dashit/optimize_guides $(BIN_DIR)
 
