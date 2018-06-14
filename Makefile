@@ -7,11 +7,13 @@ VENDOR_DIR = vendor
 SPECIAL_OPS_REPO = git@github.com:czbiohub/special_ops_crispr_tools.git
 SPECIAL_OPS_DIR = special_ops_crispr_tools
 
+SEQTK := $(shell command -v seqtk 2> /dev/null)
+
 get-vendor-deps:
 	rm -rf $(VENDOR_DIR)/$(SPECIAL_OPS_DIR)
 	git clone $(SPECIAL_OPS_REPO) $(VENDOR_DIR)/$(SPECIAL_OPS_DIR)
 
-build-components: build-optimize-guides build-score-guides build-cripsr-sites build-offtarget
+build-components: build-optimize-guides build-score-guides build-special-ops-crispr-tools
 
 build-optimize-guides:
 	cd dashit && go build -o optimize_guides
@@ -19,28 +21,22 @@ build-optimize-guides:
 build-score-guides:
 	cd misc && go build -o score_guides
 
-build-cripsr-sites:
-	cd $(VENDOR_DIR)/$(SPECIAL_OPS_DIR)/crispr_sites && $(MAKE)
+build-special-ops-crispr-tools:
+	cd $(VENDOR_DIR)/$(SPECIAL_OPS_DIR) && $(MAKE)
 
-build-offtarget:
-	cd $(VENDOR_DIR)/$(SPECIAL_OPS_DIR)/offtarget && go build -o offtarget
+check-basic-deps:
+	bash check_basic_deps.sh || exit 1
 
 check-license-agreement:
 	bash check_license.sh || exit 1
 
-install: check-license-agreement
+install: check-license-agreement check-basic-deps
 	$(MAKE) install-components
 
-install-components: get-vendor-deps build-components install-ash install-dash-it install-deps
+install-components: get-vendor-deps build-components install-dashit
 
-install-ash:
-	cd $(VENDOR_DIR)/$(SPECIAL_OPS_DIR)/ash && $(MAKE)
-
-install-dash-it:
+install-dashit:
 	cd dashit && $(MAKE)
-
-install-deps:
-	conda install -c bioconda seqtk -y
 
 test:
 	cd misc && go test -v
@@ -53,6 +49,10 @@ run-examples-setup:
 	mkdir -p $(EXAMPLE_OUTPUT_DIR)
 
 run-reads-example:
+	ifndef SEQTK
+	    $(error "running the examples requires seqtk to be installed and in your path")
+	endif
+
 	seqtk seq -A $(EXAMPLE_DASH_READS_DIR)/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fastq > $(EXAMPLE_OUTPUT_DIR)/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fasta
 	cat $(EXAMPLE_OUTPUT_DIR)/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001.fasta | $(VENDOR_DIR)/$(SPECIAL_OPS_DIR)/crispr_sites/crispr_sites -r > $(EXAMPLE_OUTPUT_DIR)/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_sites_to_reads.txt
 	./dashit/optimize_guides $(EXAMPLE_OUTPUT_DIR)/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_sites_to_reads.txt 100 1 > $(EXAMPLE_OUTPUT_DIR)/NID0092_CSF_ATGTCAG-GGTAATC_L00C_R1_001_guides.csv

@@ -1,6 +1,10 @@
 # Vendored code
 vendor/
 
+# Ignore compiled binaries
+dashit/optimize_guides
+misc/score_guides
+
 ### --- Python/IPython/Jupyter .gitignore --- ###
 
 # Byte-compiled / optimized / DLL files

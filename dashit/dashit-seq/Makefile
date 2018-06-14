@@ -1,3 +1,3 @@
 install-develop:
-	pip install -r requirements.txt
-	python setup.py develop
+	pip3 install --user -r requirements.txt
+	python3 setup.py develop
