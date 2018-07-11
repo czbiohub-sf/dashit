@@ -10,7 +10,7 @@
    target sequence.
 
 * Installation
-Installing =DASHit= requires:
+=DASHit= runs on Linux and macOS. Installing =DASHit= requires:
 
 1. =g++=
 2. =go=
