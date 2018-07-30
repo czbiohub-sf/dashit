@@ -10,6 +10,12 @@ if ! command -v pip3 &>/dev/null; then
     exit 1
 fi
 
+if ! command -v go &>/dev/null; then
+    echo "go not found - is it installed an in your path? Version 1.9 or greater required."
+    exit 1
+fi
+
+
 if [[ -z "$VIRTUAL_ENV" ]]; then
     echo "python3 virtual environment NOT detected."
     echo "We recommend you install this software in a python3 virtual environment, e.g.:"

@@ -14,6 +14,9 @@ SEQTK := $(shell command -v seqtk 2> /dev/null)
 get-vendor-deps:
 	rm -rf $(VENDOR_DIR)/$(SPECIAL_OPS_DIR)
 	git clone $(SPECIAL_OPS_REPO) $(VENDOR_DIR)/$(SPECIAL_OPS_DIR)
+	go get github.com/shenwei356/bio/seq
+	go get github.com/shenwei356/bio/seqio/fastx
+	go get github.com/shenwei356/xopen
 
 build-components: build-score-guides build-special-ops-crispr-tools
 
