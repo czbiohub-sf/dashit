@@ -46,4 +46,4 @@ rm cut*
 #prepare to run python
 echo $'\n##### Converting score_guides txt output to CSV file format using Python script DASH_csv_format.py #####\n'
 pip install pandas
-python DASH_csv_format.py $output_file
+python DASH_csv_format.py $output_file.txt

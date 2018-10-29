@@ -8,7 +8,7 @@ import os
 
 #take output file and read into dataframe
 txtfile=sys.argv[1]
-df=pd.read_csv("%s.txt" %txtfile,delimiter='\s',encoding='utf-8', engine ='python', header=None)
+df=pd.read_csv("%s" %txtfile,delimiter='\s',encoding='utf-8', engine ='python', header=None)
 
 
 # In[3]: create a list with rows to drop
@@ -44,4 +44,5 @@ df=pd.concat([df, reads],axis=1)
 df=df.drop('Reads DASHed',axis=1)
 
 # In[23]: write to CSV file
-df.to_csv("%s.csv" %txtfile)
+outputfile= os.path.splitext(txtfile)[0]
+df.to_csv("%s.csv" %outputfile)

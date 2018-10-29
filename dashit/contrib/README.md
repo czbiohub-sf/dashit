@@ -6,7 +6,7 @@ It performs subsampling, filtering, cutting TruSeq adaptors, converting to fasta
 The wrapper also will format your standard output txt file from score_guides using a Python script. 
 
 ### Installation
-Transfer or copy the DASHwrapper.sh and the Python scripts (DASH_csv_format_interactive.py and DASH_csv_format.py) into the directory with the files you wish to perform the analysis on.
+Transfer or copy the DASHwrapper.sh and the Python scripts (DASH_csv_format.py and DASH_csv_format_interactive.py) into the directory with the files you wish to perform the analysis on.
 
 ### Dependencies
 cutadapt 1.18 (script will upgrade your version), PriceSeqFilter 1.2, seqtk, Python (script will install pandas), DASHit
@@ -39,7 +39,7 @@ Your formatted CSV (outputfile.csv) will contain five columns
 5. Percent DASHed
 
 ### Running the Python script independently to format score_guides output
-If you ran score_guides on a batch of files, and output to a txt file (outputfile.txt), you can run the Python scripts to reformat output_file.txt into a csv named outputfile.csv (see above for structure of formatted output file)
+If you ran score_guides on a batch of files, and output to a txt file (outputfile or outputfile.txt), you can run the Python scripts to reformat outputfile/outputfile.txt into a csv named outputfile.csv (see above for structure of formatted output file)
 
 ```
 python DASH_csv_format.py outputfile
@@ -49,7 +49,7 @@ A version of the script will also parse your filename by underscores to create n
  
 All of your filenames must have the same number of variables in the same order, and separated by underscores (ex: sample_treatmentgrp_date.fastq.gz). Use DASH_csv_format.py if this is not true.
 
-Run the following command on outputfile.txt. Respond y/n depending on if you would like that column to be in your final file. If you respond y, you will be shown an example variable (ex: treatmentgrp) and prompted to enter a column name for the variable.
+Run the following command on outputfile. Respond y/n depending on if you would like that column to be in your final file. If you respond y, you will be shown an example variable (ex: treatmentgrp) and prompted to enter a column name for the variable.
 
 ```
 python DASH_csv_format_interactive.py outputfile
