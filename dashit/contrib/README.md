@@ -9,11 +9,7 @@ The wrapper also will format your standard output txt file from score_guides usi
 Transfer or copy the DASHwrapper.sh and the Python scripts (DASH_csv_format_interactive.py and DASH_csv_format.py) into the directory with the files you wish to perform the analysis on.
 
 ### Dependencies
-cutadapt 1.18 (script will upgrade your version)
-PriceSeqFilter 1.2
-seqtk
-Python (script will install pandas)
-DASHit
+cutadapt 1.18 (script will upgrade your version), PriceSeqFilter 1.2, seqtk, Python (script will install pandas), DASHit
 
 ### Running the script
 
