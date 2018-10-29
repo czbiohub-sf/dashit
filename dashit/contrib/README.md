@@ -1,12 +1,19 @@
 # DASH analysis
-DASHwrapper.sh illustrates a sample batch workflow for running scoreguides to examine if a set of samples would undergo depletion by a given guide set or if a DASHed library contains any remaining material which should have been depleted. 
+DASHwrapper.sh illustrates a sample batch workflow for running score_guides to examine if a set of samples would undergo depletion by a given guide set or if a DASHed library contains any remaining material which should have been depleted. 
 
-It performs subsampling, filtering, cutting TruSeq adaptors, converting to fasta, and running DASHit score guides on a directory of fastq.gz files. Recommend to run in tmux/screen so it can run independently.
+It performs subsampling, filtering, cutting TruSeq adaptors, converting to fasta, and running DASHit score_guides on a directory of fastq.gz files. Recommend to run in tmux/screen.
 
-Then it will format your standard output txt file from score_guides using a Python script. 
+The wrapper also will format your standard output txt file from score_guides using a Python script. 
 
 ### Installation
 Transfer or copy the DASHwrapper.sh and the Python scripts (DASH_csv_format_interactive.py and DASH_csv_format.py) into the directory with the files you wish to perform the analysis on.
+
+### Dependencies
+cutadapt 1.18 (script will upgrade your version)
+PriceSeqFilter 1.2
+seqtk
+Python (script will install pandas)
+DASHit
 
 ### Running the script
 
