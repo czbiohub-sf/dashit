@@ -304,7 +304,7 @@ def main():
         log.info('Launching ontarget filtering server')
         ontarget_proc = launch_offtarget_server(args.ontarget)
 
-        b# Catch SIGTERM/SIGINT to shutdown the offtarget server
+        # Catch SIGTERM/SIGINT to shutdown the offtarget server
         def ontarget_handler(signal, frame):
             global ontarget_proc
             log.info('Killing ontarget server')
