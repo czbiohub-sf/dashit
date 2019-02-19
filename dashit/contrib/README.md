@@ -9,13 +9,13 @@ The wrapper also will format your standard output txt file from score_guides usi
 Transfer or copy the DASHwrapper.sh and the Python scripts (DASH_csv_format.py and DASH_csv_format_interactive.py) into the directory with the files you wish to perform the analysis on.
 
 ### Dependencies
-cutadapt 1.18 (script will upgrade your version), PriceSeqFilter 1.2, seqtk, Python (script will install pandas), DASHit
+seqtk, Python (script will import pandas), DASHit
 
 ### Running the script
 
 Use bash to run the script and follow with 3 arguments
 1. the AWS path to your files
-2. the path to the DASH guide library you want use to score your files
+2. the path to the DASH guide library you want use to score your files (must be in the format of the output of optimize_guides)
 3. the prefix of your output file (outputfile)
 
 
