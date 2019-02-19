@@ -6,7 +6,7 @@ It performs subsampling, filtering, cutting TruSeq adaptors, converting to fasta
 The wrapper also will format your standard output txt file from score_guides using a Python script. 
 
 ### Installation
-Transfer or copy the DASHwrapper.sh and the Python scripts (DASH_csv_format.py and DASH_csv_format_interactive.py) into the directory with the files you wish to perform the analysis on.
+Transfer or copy the score_guides_wrapper.sh and the Python scripts (DASH_csv_format.py and DASH_csv_format_interactive.py) into the directory with the files you wish to perform the analysis on.
 
 ### Dependencies
 seqtk, Python (script will import pandas), DASHit
@@ -20,15 +20,8 @@ Use bash to run the script and follow with 3 arguments
 
 
 ```
-bash DASHwrapper.sh s3://czbiohub-seqbot/fastqs/180907_A00111_0206_BH7W5WDSXX/rawdata/Amy_Lyden_AIH /mnt/data/specialops/DASH_Analysis/nribo2_150_V2.csv AIH_Plate_02_1xPCR_DASHed
+bash score_guides_wrapper.sh s3://czbiohub-seqbot/fastqs/180907_A00111_0206_BH7W5WDSXX/rawdata/Amy_Lyden_AIH /mnt/data/specialops/DASH_Analysis/nribo2_150_V2.csv AIH_Plate_02_1xPCR_DASHed
 ```
-
-### Your unformatted output file
-
-Your unformatted CSV (outputfile_unformatted.csv) will contain three components.
-1. score_guides output line
-2. percent DASHed
-3. a line with the total number of reads processed
 
 ### Your formatted output file
 Your formatted CSV (outputfile.csv) will contain five columns

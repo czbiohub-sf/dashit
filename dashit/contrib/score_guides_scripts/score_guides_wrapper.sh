@@ -25,9 +25,7 @@ for i in sub100k*; do seqtk seq -A $i > ${i:0:-4}asta; done;
 echo $'\n##### Running score_guides on all of your files using given guide library CSV #####\n'
 for i in sub100k*.fasta; do score_guides $path_to_DASHguides $i >> ${output_file}.txt; done
 
-tr "=" "," < $output_file.txt  > ${output_file}_unformatted.csv
-
 #prepare to run python
 echo $'\n##### Converting score_guides txt output to CSV file format using Python script DASH_csv_format.py #####\n'
-pip install pandas
+pip install pandas -q
 python DASH_csv_format.py $output_file.txt
