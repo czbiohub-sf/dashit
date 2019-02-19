@@ -19,7 +19,7 @@ done;
 
 #convert fastq to fasta
 echo $'\n##### Converting fastq to fasta using seqtk #####\n'
-for i in sub100k*; do seqtk seq -A $i > ${i:0:-1}asta; done;
+for i in sub100k*; do seqtk seq -A $i > ${i:0:-4}asta; done;
 
 #run score_guides
 echo $'\n##### Running score_guides on all of your files using given guide library CSV #####\n'
