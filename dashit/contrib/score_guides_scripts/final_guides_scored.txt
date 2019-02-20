@@ -1,0 +1,64 @@
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_10_S6_R1.fasta hit 76358/97085 = 78.65%
+Total is: 97085
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_10_S6_R2.fasta hit 75869/97085 = 78.15%
+Total is: 97085
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_11_S7_R1.fasta hit 75923/96084 = 79.02%
+Total is: 96084
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_11_S7_R2.fasta hit 75403/96084 = 78.48%
+Total is: 96084
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_12_S8_R1.fasta hit 70626/97155 = 72.69%
+Total is: 97155
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_12_S8_R2.fasta hit 70277/97155 = 72.33%
+Total is: 97155
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_13_S9_R1.fasta hit 71749/96391 = 74.44%
+Total is: 96391
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_13_S9_R2.fasta hit 71421/96391 = 74.10%
+Total is: 96391
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_14_S10_R1.fasta hit 77878/97233 = 80.09%
+Total is: 97233
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_14_S10_R2.fasta hit 77468/97233 = 79.67%
+Total is: 97233
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_15_S11_R1.fasta hit 37791/48592 = 77.77%
+Total is: 48592
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_15_S11_R2.fasta hit 37499/48592 = 77.17%
+Total is: 48592
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_16_S12_R1.fasta hit 83972/96581 = 86.94%
+Total is: 96581
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_16_S12_R2.fasta hit 83500/96581 = 86.46%
+Total is: 96581
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_17_S13_R1.fasta hit 64926/96919 = 66.99%
+Total is: 96919
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_17_S13_R2.fasta hit 64402/96919 = 66.45%
+Total is: 96919
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_18_S14_R1.fasta hit 61845/96351 = 64.19%
+Total is: 96351
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_18_S14_R2.fasta hit 61387/96351 = 63.71%
+Total is: 96351
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_19_S15_R1.fasta hit 70439/97454 = 72.28%
+Total is: 97454
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_19_S15_R2.fasta hit 69789/97454 = 71.61%
+Total is: 97454
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_1_S1_R1.fasta hit 58566/73560 = 79.62%
+Total is: 73560
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_1_S1_R2.fasta hit 58211/73560 = 79.13%
+Total is: 73560
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_20_S16_R1.fasta hit 70741/96523 = 73.29%
+Total is: 96523
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_20_S16_R2.fasta hit 69961/96523 = 72.48%
+Total is: 96523
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_6_S2_R1.fasta hit 69683/96816 = 71.97%
+Total is: 96816
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_6_S2_R2.fasta hit 68941/96816 = 71.21%
+Total is: 96816
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_7_S3_R1.fasta hit 73249/96331 = 76.04%
+Total is: 96331
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_7_S3_R2.fasta hit 72789/96331 = 75.56%
+Total is: 96331
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_8_S4_R1.fasta hit 74197/96196 = 77.13%
+Total is: 96196
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_8_S4_R2.fasta hit 73712/96196 = 76.63%
+Total is: 96196
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_9_S5_R1.fasta hit 74674/96741 = 77.19%
+Total is: 96741
+1528 guides in final_guides.csv vs. cut-filt-85-98-90_sub100k_GI01_9_S5_R2.fasta hit 74397/96741 = 76.90%
+Total is: 96741

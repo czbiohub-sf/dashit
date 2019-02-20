@@ -1,10 +1,12 @@
 # DASH analysis
-`design_guides_wrapper.sh` illustrates a sample workflow for designing guides using DASHit. It will take your reads as fasta files, an on-target fasta and an off-target fasta. It will then create crispr sites files for your reads, your on-target fasta and your off-target fasta, and use a Python script located in dashit/dashit-reads/dashit_reads/ to remove all guides found in your reads which hit the off-target fasta and only keep ones found in your on-target fasta.
+`design_guides_wrapper.sh` illustrates a sample workflow for designing guides using DASHit. Arguments for the wrapper are your reads as fasta files, an on-target fasta and an off-target fasta. It will then create crispr sites files for your reads, your on-target fasta and your off-target fasta, and use the dashit_reads_filter.py Python script located in dashit/dashit-reads/dashit_reads/ to remove guides found in your reads which hit the off-target fasta and only keep guides that hit your reads and the on-target fasta.
 
 It will then run optimize_guides to determine the number of reads hit by each guide, and run score_guides on your original reads with the full guide set to see how much is DASHable. You may want to re-run score_guides with 96, 192, etc guides, to determine how much would be DASHable by a smaller number of guides. The optimize_guides output can be used to make an elbow plot to determine the optimal number.
 
 ### Installation
 Copy your reads, your on-target fasta, and your off-target fasta into the contrib folder, after following installation for the `guide_design_tools` repo.
+
+Note: if you choose to move the wrapper elsewhere, you will need to edit the path to the dashit_reads_filter.py script in the wrapper.
 
 ### Dependencies
 Python (script will import pandas), DASHit
@@ -32,7 +34,7 @@ Your final guides CSV (`final_guides.csv`) will contain four components.
 3. Number of reads covered by site
 4. Cumulative number of reads hit
 
-You should use this file to generate an elbow plot, with guide sequence on the x-axis and number of reads covered by site/total reads hit. 
+You should use this file to generate an elbow plot, with guide sequence on the x-axis and number of reads covered by site/total reads hit on the y-axis.
 
 ### Your formatted score_guides output file
 Your formatted CSV (`final_guides_scored.csv`) will contain five columns

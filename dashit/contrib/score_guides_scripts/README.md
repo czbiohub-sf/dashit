@@ -1,12 +1,12 @@
 # DASH analysis
-DASHwrapper.sh illustrates a sample batch workflow for running score_guides to examine if a set of samples would undergo depletion by a given guide set or if a DASHed library contains any remaining material which should have been depleted. 
+score_guides_wrapper.sh illustrates a sample batch workflow for running score_guides to examine if a set of samples would undergo depletion by a given guide set or if a DASHed library contains any remaining material which should have been depleted. 
 
-It performs subsampling, filtering, cutting TruSeq adaptors, converting to fasta, and running DASHit score_guides on a directory of fastq.gz files. Recommend to run in tmux/screen.
+It performs subsampling, converting to fasta, and running DASHit score_guides on a directory of fastq.gz files downloaded from AWS. Recommend to run in tmux/screen.
 
 The wrapper also will format your standard output txt file from score_guides using a Python script. 
 
 ### Installation
-Transfer or copy the score_guides_wrapper.sh and the Python scripts (DASH_csv_format.py and DASH_csv_format_interactive.py) into the directory with the files you wish to perform the analysis on.
+Copy the score_guides_wrapper.sh into the directory with the files you wish to perform the analysis on.
 
 ### Dependencies
 seqtk, Python (script will import pandas), DASHit
@@ -31,11 +31,14 @@ Your formatted CSV (outputfile.csv) will contain five columns
 4. Total Reads in sample
 5. Percent DASHed
 
+### Other files generated
+`outputfile.txt` is the redirected output from score_guides. Subsampled fastqs and fastas, as well as raw data files, are kept after running the wrapper.
+
 ### Running the Python script independently to format score_guides output
-If you ran score_guides on a batch of files, and output to a txt file (outputfile or outputfile.txt), you can run the Python scripts to reformat outputfile/outputfile.txt into a csv named outputfile.csv (see above for structure of formatted output file)
+If you ran score_guides on a batch of files, and redirected output to a txt file (outputfile or outputfile.txt), you can run the Python scripts to reformat outputfile/outputfile.txt into a csv named outputfile.csv (see above for structure of formatted output file)
 
 ```
-python DASH_csv_format.py outputfile
+python DASH_csv_format.py outputfile.txt
 ```
 
 A version of the script will also parse your filename by underscores to create new columns and prompt you if you would like to keep this information column by column. This will create a file which is identical to the formatted output file, but has additional columns defined by you.
@@ -45,5 +48,5 @@ All of your filenames must have the same number of variables in the same order, 
 Run the following command on outputfile. Respond y/n depending on if you would like that column to be in your final file. If you respond y, you will be shown an example variable (ex: treatmentgrp) and prompted to enter a column name for the variable.
 
 ```
-python DASH_csv_format_interactive.py outputfile
+python DASH_csv_format_interactive.py outputfile.txt
 ```
