@@ -1,4 +1,4 @@
-# DASH analysis
+# DASH optimize_guides analysis
 `design_guides_wrapper.sh` illustrates a sample workflow for designing guides using DASHit. Arguments for the wrapper are your reads as fasta files, an on-target fasta and an off-target fasta. It will then create crispr sites files for your reads, your on-target fasta and your off-target fasta, and use the dashit_reads_filter.py Python script located in dashit/dashit-reads/dashit_reads/ to remove guides found in your reads which hit the off-target fasta and only keep guides that hit your reads and the on-target fasta.
 
 It will then run optimize_guides to determine the number of reads hit by each guide, and run score_guides on your original reads with the full guide set to see how much is DASHable. You may want to re-run score_guides with 96, 192, etc guides, to determine how much would be DASHable by a smaller number of guides. The optimize_guides output can be used to make an elbow plot to determine the optimal number.

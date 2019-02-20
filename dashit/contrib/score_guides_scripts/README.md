@@ -1,5 +1,5 @@
-# DASH analysis
-score_guides_wrapper.sh illustrates a sample batch workflow for running score_guides to examine if a set of samples would undergo depletion by a given guide set or if a DASHed library contains any remaining material which should have been depleted. 
+# DASH score_guides analysis
+`score_guides_wrapper.sh` illustrates a sample batch workflow for running score_guides to examine if a set of samples would undergo depletion by a given guide set or if a DASHed library contains any remaining material which should have been depleted. 
 
 It performs subsampling, converting to fasta, and running DASHit score_guides on a directory of fastq.gz files downloaded from AWS. Recommend to run in tmux/screen.
 
