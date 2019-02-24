@@ -7,29 +7,29 @@ path_to_DASHguides=$2
 output_file=$3
 
 #sync and unzip files
-#echo $'\n##### Downloading gunzipped files from AWS and removing Undetermined files if present #####\n'
-#aws s3 sync $aws_path . --exclude "*" --include "*.gz"
-#rm Undetermined*
+echo $'\n##### Downloading gunzipped files from AWS and removing Undetermined files if present #####\n'
+aws s3 sync $aws_path . --exclude "*" --include "*.gz"
+rm Undetermined*
 
 #subsample to 100,000 reads
-#echo $'\n##### Subsampling fastq.gz to 100k reads using seqtk #####\n'
-#for i in *.fastq.gz;
-#do seqtk sample -s100 $i 100000 > sub100k_${i:0:-3};
-#done;
+echo $'\n##### Subsampling fastq.gz to 100k reads using seqtk #####\n'
+for i in *.fastq.gz;
+do seqtk sample -s100 $i 100000 > sub100k_${i:0:-3};
+done;
 
 #convert fastq to fasta
-#echo $'\n##### Converting fastq to fasta using seqtk #####\n'
-#for i in sub100k*; do seqtk seq -A $i > ${i:0:-4}asta; done;
+echo $'\n##### Converting fastq to fasta using seqtk #####\n'
+for i in sub100k*; do seqtk seq -A $i > ${i:0:-4}asta; done;
 
 #run score_guides
-#echo $'\n##### Running score_guides on all of your files using given guide library CSV #####\n'
-#for i in sub100k*.fasta; do score_guides $path_to_DASHguides $i >> ${output_file}.txt; done
+echo $'\n##### Running score_guides on all of your files using given guide library CSV #####\n'
+for i in sub100k*.fasta; do score_guides $path_to_DASHguides $i >> ${output_file}.txt; done
 
 #prepare to run python
 echo $'\n##### Converting score_guides txt output to CSV file format using Python script #####\n'
 pip install pandas -q
 
- python - $output_file.txt <<END
+python - $output_file.txt <<END
 # In[2]: import pandas
 import pandas as pd
 import sys
@@ -76,4 +76,3 @@ outputfile= os.path.splitext(txtfile)[0]
 df.to_csv("%s.csv" %outputfile)
 
 END
-
