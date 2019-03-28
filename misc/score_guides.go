@@ -2,7 +2,8 @@ package main
 
 import (
 	"bufio"
-	"bytes"
+//	"bytes"
+//	"unicode"
 	"fmt"
 	"github.com/shenwei356/bio/seq"
 	"github.com/shenwei356/bio/seqio/fastx"
@@ -67,9 +68,10 @@ func printUsage() {
 	fmt.Fprintf(os.Stderr, "\n\t\t-s\tSplit DASHed and unDASHed reads from reads.fasta\n")
 }
 
-func SetHitsAndMisses(reader *fastx.Reader, guides []*seq.Seq, rh ReadHitable) {
+func SetHitsAndMisses(reader *fastx.Reader, guides []string, rh ReadHitable) {
 	var foundReadHit bool
-
+	readNumber := 0
+	
 	for {
 		record, err := reader.Read()
 		if err != nil {
@@ -82,8 +84,21 @@ func SetHitsAndMisses(reader *fastx.Reader, guides []*seq.Seq, rh ReadHitable) {
 
 		foundReadHit = false
 
+		// The FASTX library we use doesn't allow empty
+		// comment lines (a '>' followed by a newline). This
+		// causes the actual sequence to not be read. We'll
+		// flag this as an error
+		if len(record.Seq.Seq) == 0 {
+			fmt.Fprintf(os.Stderr, "Parsing error reading FASTA " +
+				"file at read %d - make sure that there are " +
+				"no empty comments in this FASTA file " +
+				"(lines with only a single '>')\n", readNumber)
+			os.Exit(1)
+		}
+
 		for _, g := range guides {
-			if bytes.Contains(record.Seq.Seq, g.Seq) {
+			// Search for guides ignoring case
+			if strings.Contains(strings.ToUpper(string(record.Seq.Seq)), g) {
 				foundReadHit = true
 				break
 			}
@@ -94,10 +109,12 @@ func SetHitsAndMisses(reader *fastx.Reader, guides []*seq.Seq, rh ReadHitable) {
 		} else {
 			rh.recordMiss(record)
 		}
+
+		readNumber += 1
 	}
 }
 
-func getGuides(guidesFilename string) []*seq.Seq {
+func getGuides(guidesFilename string) []string {
 	guidesFile, err := os.Open(guidesFilename)
 	checkError(err)
 	defer guidesFile.Close()
@@ -124,7 +141,8 @@ func getGuides(guidesFilename string) []*seq.Seq {
 		os.Exit(1)
 	}
 	
-	guides := make([]*seq.Seq, 0, 50)
+	//guides := make([]*seq.Seq, 0, 50)
+	guides := make([]string, 0, 50)
 
 	forwardPAM := "GG"
 
@@ -140,12 +158,19 @@ func getGuides(guidesFilename string) []*seq.Seq {
 		for _, s := range [4]string{"A", "T", "C", "G"} {
 			newSeq, err := seq.NewSeq(seq.DNA, []byte(baseGuide + s + forwardPAM))
 			checkError(err)
-			guides = append(guides, newSeq)
 
-			guides = append(guides, newSeq.RevCom())
+			// It would be nicer to store Seq types
+			// instead of strings, but we need to be
+			// case-insensitive, and the current version
+			// of the bio library made that difficult
+			guides = append(guides, strings.ToUpper(string(newSeq.Seq)))
+			guides = append(guides, strings.ToUpper(string(newSeq.RevCom().Seq)))			
+
+			fmt.Fprintf(os.Stderr, "%s\n", guides[len(guides)-1])
+			fmt.Fprintf(os.Stderr, "%s\n", guides[len(guides)-2])
 		}
 		
-		if guides[len(guides)-1].Length() != 23 {
+		if len(guides[len(guides)-1]) != 23 {
 			fmt.Fprintf(os.Stderr, "Expected a 20-mer guide + " +
 				"3-mer PAM in %s, got %s\n",
 				os.Args[1], guides[len(guides)-1])
