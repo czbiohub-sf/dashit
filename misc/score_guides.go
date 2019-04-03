@@ -2,8 +2,6 @@ package main
 
 import (
 	"bufio"
-//	"bytes"
-//	"unicode"
 	"fmt"
 	"github.com/shenwei356/bio/seq"
 	"github.com/shenwei356/bio/seqio/fastx"
