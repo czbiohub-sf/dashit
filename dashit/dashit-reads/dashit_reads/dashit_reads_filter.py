@@ -133,7 +133,7 @@ def launch_offtarget_server(offtarget_filename):
     # To detect if the offtarget server is running, we read from the
     # stdout/stderr of the offtarget process to see if the expected
     # lines of output are present in the expected order
-    expected_lines = [ 'Opening', 'ingesting', 'computing', 'index',
+    expected_lines = [ 'ingesting', 'computing', 'index',
                        'max', 'occupied', 'starting server']
 
     server_started = False
@@ -225,8 +225,7 @@ def check_offtarget_running():
     try:
         get_offtargets(["ACGT" * 5], 5, 9, 18)
         return True
-    except Exception as e:
-        log.info(e)
+    except ConnectionResetError:
         return False
 
 def parse_offtarget_server_response(response):
