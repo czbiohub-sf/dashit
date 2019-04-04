@@ -225,9 +225,9 @@ func main() {
                 i += 1
             }
             
-            fmt.Printf("Guide, Site, Number of reads covered by site, cumulative number of reads covered, cumulative percent of reads covered, random read hit by this guide\n");
+            fmt.Printf("Guide,Site,Number of reads covered by site,cumulative number of reads covered,cumulative percent of reads covered,random read hit by this guide\n");
         } else {
-            fmt.Printf("Guide, Site, Number of reads covered by site, cumulative number of reads covered, cumulative percent of reads covered\n");
+            fmt.Printf("Guide,Site,Number of reads covered by site,cumulative number of reads covered,cumulative percent of reads covered\n");
         }
 
         cumulativeReadsCovered := 0
@@ -235,9 +235,9 @@ func main() {
             cumulativeReadsCovered += countsChosen[i]
 
             if len(readsFile) > 0 {
-		    fmt.Printf("%d, %s, %d, %d, %.2f, %s\n", i + 1, sites[g], countsChosen[i], cumulativeReadsCovered, float64(cumulativeReadsCovered)/float64(totalNumReads) * 100, readIdxToSeq[guideIdxToReadIdx[i]]);                
+		    fmt.Printf("%d,%s,%d,%d,%.2f,%s\n", i + 1, sites[g], countsChosen[i], cumulativeReadsCovered, float64(cumulativeReadsCovered)/float64(totalNumReads) * 100, readIdxToSeq[guideIdxToReadIdx[i]]);                
             } else {
-		    fmt.Printf("%d, %s, %d, %d, %.2f\n", i + 1, sites[g], countsChosen[i], cumulativeReadsCovered, float64(cumulativeReadsCovered)/float64(totalNumReads) * 100);                
+		    fmt.Printf("%d,%s,%d,%d,%.2f\n", i + 1, sites[g], countsChosen[i], cumulativeReadsCovered, float64(cumulativeReadsCovered)/float64(totalNumReads) * 100);                
             }
         }
 
