@@ -131,8 +131,10 @@ func getGuides(guidesFilename string) []string {
 
 	scanner.Scan()
 
-	if !strings.HasPrefix(scanner.Text(), "Site, Site index, Number of reads " +
-		"covered by site, cumulative number of reads covered") {
+	if !strings.HasPrefix(scanner.Text(), "Guide,Site," +
+		"Number of reads covered by site," +
+		"cumulative number of reads covered," +
+		"cumulative percent of reads covered") {
 		fmt.Fprintf(os.Stderr, "FATAL ERROR: Expected guides file %s to " +
 			"have a second line beginning with 'Site, Site index, ', is this " +
 			"file corrupted?\n")
@@ -144,14 +146,15 @@ func getGuides(guidesFilename string) []string {
 
 	forwardPAM := "GG"
 
-	fmt.Fprintf(os.Stderr, "Scoring guides by looking for guides in %s " +
-		"preceeding an N%s PAM, or, the reverse complement of guides " +
-		"in %s succeeding the reverse complement of this PAM\n",
+	fmt.Fprintf(os.Stderr, "Scoring the following guides by looking for " +
+		"guides in %s preceeding an N%s PAM, or, the reverse " +
+		"complement of guides in %s succeeding the reverse " +
+		"complement of this PAM\n",
 		guidesFilename, forwardPAM, guidesFilename);
 
 	for scanner.Scan() {
 		// For each guide in the input, create all possible guide + PAM sites
-		baseGuide := strings.Split(scanner.Text(), ",")[0]
+		baseGuide := strings.Split(scanner.Text(), ",")[1]
 
 		for _, s := range [4]string{"A", "T", "C", "G"} {
 			newSeq, err := seq.NewSeq(seq.DNA, []byte(baseGuide + s + forwardPAM))
