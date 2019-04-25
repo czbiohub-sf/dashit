@@ -166,9 +166,6 @@ func getGuides(guidesFilename string) []string {
 			// of the bio library made that difficult
 			guides = append(guides, strings.ToUpper(string(newSeq.Seq)))
 			guides = append(guides, strings.ToUpper(string(newSeq.RevCom().Seq)))			
-
-			fmt.Fprintf(os.Stderr, "%s\n", guides[len(guides)-1])
-			fmt.Fprintf(os.Stderr, "%s\n", guides[len(guides)-2])
 		}
 		
 		if len(guides[len(guides)-1]) != 23 {
