@@ -6,7 +6,7 @@ It will then run optimize_guides to determine the number of reads hit by each gu
 ## Installation
 Copy your reads, your on-target fasta, and your off-target fasta into the contrib folder, after following installation for the `guide_design_tools` repo.
 
-*Note* if you choose to move the wrapper elsewhere, you will need to edit the path to the dashit_reads_filter.py script in the wrapper.
+*Note*: if you choose to move the wrapper elsewhere, you will need to edit the path to the dashit_reads_filter.py script in the wrapper.
 
 ## Dependencies
 Python (script will import pandas), DASHit
@@ -16,18 +16,29 @@ Python (script will import pandas), DASHit
 ### Preparing your reads to run DASHit
 **Subsample files**: if your files are large, we recommend randomly subsampling your files to 100k reads. This can be done on fastqs using `seqtk`. Use the same seed to maintain paired information.
 
-`seqtk sample -s100 input_R1.fastq 100000 > sub100k_input_R1.fastq`
-`seqtk sample -s100 input_R2.fastq 100000 > sub100k_input_R2.fastq`
+```
+seqtk sample -s100 input_R1.fastq 100000 > sub100k_input_R1.fastq
+```
+
+```
+seqtk sample -s100 input_R2.fastq 100000 > sub100k_input_R2.fastq
+```
 
 
 **Trim adaptors**: trim your adaptors off your reads to avoid them appearing as guides in your guide set. We do this using `cutadapt`, but other programs such as `trimmomatic` also work well. A sample command trimming Illumina TruSeq adaptors is shown below.
 
-`cutadapt --report=minimal -j 16 -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC -A AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT -o cut-sub100k_input_R1.fastq -p cut-sub100k_input_R2.fastq sub100k_input_R1.fastq $sub100k_input_R2.fastq -m 75`
+```
+cutadapt --report=minimal -j 16 -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC -A AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT -o cut-sub100k_input_R1.fastq -p cut-sub100k_input_R2.fastq sub100k_input_R1.fastq $sub100k_input_R2.fastq -m 75
+```
 
 **Convert from fastq to fasta if needed**: you can convert from fastq to fasta in many way; we use `seqtk` for this as well.
 
-`seqtk seq -A  cut-sub100k_input_R1.fastq > cut-sub100k_input_R1.fasta`
-`seqtk seq -A  cut-sub100k_input_R2.fastq > cut-sub100k_input_R2.fasta`
+```
+seqtk seq -A  cut-sub100k_input_R1.fastq > cut-sub100k_input_R1.fasta
+```
+```
+seqtk seq -A  cut-sub100k_input_R2.fastq > cut-sub100k_input_R2.fasta
+```
 
 ### Preparing your on and off target files
 
@@ -37,13 +48,18 @@ You can use `bedtools` to help generate your on-target and off-target fastas.
 
 If you have a bed file annotating on-target regions, you can use `bedtools getfasta` to generate an on-target fasta.
 
-`bedtools getfasta -fi genome.fa -bed on-target_annotations.bed -fo on-target_genome_regions.fa`
+```
+bedtools getfasta -fi genome.fa -bed on-target_annotations.bed -fo on-target_genome_regions.fa
+```
 
 
 **Off-target files**
 You can use a bed file to mask on-target regions of a fasta to generate an off-target fasta, using `bedtools maskfasta`, with the `-mc -` option.
 
-`bedtools maskfasta -bed on-target_annotations.bed -fi genome.fa -fo off-target_genome_regions.fa -mc -`
+
+```
+bedtools maskfasta -bed on-target_annotations.bed -fi genome.fa -fo off-target_genome_regions.fa -mc -
+```
 
 *Note*: Both fastas should contain no letters other than A, G, C, T or N.
 
