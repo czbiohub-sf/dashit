@@ -3,18 +3,49 @@
 
 It will then run optimize_guides to determine the number of reads hit by each guide, and run score_guides on your original reads with the full guide set to see how much is DASHable. You may want to re-run score_guides with 96, 192, etc guides, to determine how much would be DASHable by a smaller number of guides. The optimize_guides output can be used to make an elbow plot to determine the optimal number.
 
-### Installation
+## Installation
 Copy your reads, your on-target fasta, and your off-target fasta into the contrib folder, after following installation for the `guide_design_tools` repo.
 
-Note: if you choose to move the wrapper elsewhere, you will need to edit the path to the dashit_reads_filter.py script in the wrapper.
+*Note* if you choose to move the wrapper elsewhere, you will need to edit the path to the dashit_reads_filter.py script in the wrapper.
 
-### Dependencies
+## Dependencies
 Python (script will import pandas), DASHit
 
-### File Requirements
-You should subsample your reads to 100k (can use seqtk), adaptor trim your reads (can use cutadapt) and convert them to fasta (can use seqtk). You can use bedtools to help generate your on-target and off-target fastas. If you have a bed file annotating on-target regions, you can use `bedtools getfasta` to generate an on-target fasta. You can use that same bed file to mask regions of a fasta to generate an off-target fasta, using `bedtools maskfasta`, with the `-mc -` option.
+## File Requirements
 
-Your fastas should contain no letters other than A, G, C, T or N. Lowercase letters should be converted to uppercase.
+### Preparing your reads to run DASHit
+**Subsample files**: if your files are large, we recommend randomly subsampling your files to 100k reads. This can be done on fastqs using `seqtk`. Use the same seed to maintain paired information.
+
+`seqtk sample -s100 input_R1.fastq 100000 > sub100k_input_R1.fastq`
+`seqtk sample -s100 input_R2.fastq 100000 > sub100k_input_R2.fastq`
+
+
+**Trim adaptors**: trim your adaptors off your reads to avoid them appearing as guides in your guide set. We do this using `cutadapt`, but other programs such as `trimmomatic` also work well. A sample command trimming Illumina TruSeq adaptors is shown below.
+
+`cutadapt --report=minimal -j 16 -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC -A AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT -o cut-sub100k_input_R1.fastq -p cut-sub100k_input_R2.fastq sub100k_input_R1.fastq $sub100k_input_R2.fastq -m 75`
+
+**Convert from fastq to fasta if needed**: you can convert from fastq to fasta in many way; we use `seqtk` for this as well.
+
+`seqtk seq -A  cut-sub100k_input_R1.fastq > cut-sub100k_input_R1.fasta`
+`seqtk seq -A  cut-sub100k_input_R2.fastq > cut-sub100k_input_R2.fasta`
+
+### Preparing your on and off target files
+
+You can use `bedtools` to help generate your on-target and off-target fastas.
+
+**On-target files**
+
+If you have a bed file annotating on-target regions, you can use `bedtools getfasta` to generate an on-target fasta.
+
+`bedtools getfasta -fi genome.fa -bed on-target_annotations.bed -fo on-target_genome_regions.fa`
+
+
+**Off-target files**
+You can use a bed file to mask on-target regions of a fasta to generate an off-target fasta, using `bedtools maskfasta`, with the `-mc -` option.
+
+`bedtools maskfasta -bed on-target_annotations.bed -fi genome.fa -fo off-target_genome_regions.fa -mc -`
+
+*Note*: Both fastas should contain no letters other than A, G, C, T or N.
 
 ### Running the script
 
@@ -27,10 +58,10 @@ Use bash to run the script and follow with 3 arguments
 bash design_guides_wrapper.sh cut-filt-85-98-90_sub100k_GI01 ontarget_mm10-rRNA_region_UPPERcase.fa masked_mm10_SC5314_genomes_UPPERcase.fa
 ```
 
-### Your final guides/optimize_guides output file 
+### Your final guides/optimize_guides output file
 Your final guides CSV (`final_guides.csv`) will contain four components.
 1. the guide sequence (site)
-2. the site index 
+2. the site index
 3. Number of reads covered by site
 4. Cumulative number of reads hit
 
