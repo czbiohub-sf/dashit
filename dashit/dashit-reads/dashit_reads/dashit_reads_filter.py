@@ -21,6 +21,7 @@ import threading
 import traceback
 import select
 import requests
+from requests import ConnectionError
 from ash import flash
 from pathlib import Path
 from tqdm import tqdm, trange
@@ -56,7 +57,7 @@ def get_offtargets(targets, c5, c10, c20):
             url = "http://localhost:8080/search?targets=%s&limits=%s"
             url = url % (",".join(map(str, targets[i:i+batch_size])), ",".join(map(str, [c5, c10, c20])))
             offtargets.update(parse_offtarget_server_response(requests.get(url, timeout=600)))
-    except (ConnectionResetError, ConnectionError):
+    except ConnectionError:
         log.error('Error contacting offtarget server')
         raise
 
@@ -225,7 +226,7 @@ def check_offtarget_running():
     try:
         get_offtargets(["ACGT" * 5], 5, 9, 18)
         return True
-    except ConnectionResetError:
+    except ConnectionError:
         return False
 
 def parse_offtarget_server_response(response):
