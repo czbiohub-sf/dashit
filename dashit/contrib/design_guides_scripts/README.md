@@ -28,7 +28,7 @@ seqtk sample -s100 input_R2.fastq 100000 > sub100k_input_R2.fastq
 **Trim adaptors**: trim your adaptors off your reads to avoid them appearing as guides in your guide set. We do this using `cutadapt`, but other programs such as `trimmomatic` also work well. A sample command trimming Illumina TruSeq adaptors is shown below.
 
 ```
-cutadapt --report=minimal -j 16 -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC -A AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT -o cut-sub100k_input_R1.fastq -p cut-sub100k_input_R2.fastq sub100k_input_R1.fastq $sub100k_input_R2.fastq -m 75
+cutadapt --report=minimal -j 16 -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC -A AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT -o cut-sub100k_input_R1.fastq -p cut-sub100k_input_R2.fastq sub100k_input_R1.fastq sub100k_input_R2.fastq -m 75
 ```
 
 **Convert from fastq to fasta if needed**: you can convert from fastq to fasta in many way; we use `seqtk` for this as well.
