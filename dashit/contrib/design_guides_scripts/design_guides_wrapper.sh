@@ -7,16 +7,16 @@ on_target=$2
 off_target=$3
 
 echo $'\n##### Running crispr_sites -r on your reads #####\n'
-cat $reads_prefix* | crispr_sites -r > reads_crispr_sites.txt
+cat ${reads_prefix}*.fasta | crispr_sites -r > reads_crispr_sites.txt
 
-echo $'\n##### Running crispr_sites on your on-target and off-target fastas  #####\n'
+echo $'\n##### Running crispr_sites on your on-target fasta  #####\n'
 cat $on_target | crispr_sites > on_target_crispr_sites.txt
+
+echo $'\n##### Running crispr_sites on your off-target fasta  #####\n'
 cat $off_target | crispr_sites > off_target_crispr_sites.txt
 
 echo $'\n##### Running dashit_reads_filter.py to extract on-target crispr sites in your reads  #####\n'
-python3 ../../dashit-reads/dashit_reads/dashit_reads_filter.py reads_crispr_sites.txt --offtarget off_target_crispr_sites.txt --offtarget_radius 5_10_20 --ontarget on_target_crispr_sites.txt --ontarget_radius 5_10_20 --filtered_explanation why_final_guides.csv > final_crispr_sites.txt
-#remove first two lines of file
-sed -i 1,2d final_crispr_sites.txt
+dashit-reads-filter reads_crispr_sites.txt --offtarget off_target_crispr_sites.txt --offtarget_radius 5_10_20 --ontarget on_target_crispr_sites.txt --ontarget_radius 5_10_20 --filtered_explanation why_final_guides.csv > final_crispr_sites.txt
 
 let number_of_guides=$(cat final_crispr_sites.txt | wc -l)-1
 
@@ -27,9 +27,9 @@ echo $'\n##### Running optimize_guides to determine number of reads hit per guid
 optimize_guides final_crispr_sites.txt $number_of_guides 1 > final_guides.csv
 
 echo $'\n##### Running score_guides to determine what percentage of reads are targeted by full guide set  #####\n'
-for i in $reads_prefix*; do score_guides final_guides.csv $i >> final_guides_scored.txt; done
+for i in $reads_prefix*.fasta; do score_guides final_guides.csv $i >> final_guides_scored.txt; done
 
-echo $'\n##### Converting score_guides txt output to CSV file format using Python script DASH_csv_format.py #####\n'
+echo $'\n##### Converting score_guides txt output to formatted CSV file format using Python script DASH_csv_format.py #####\n'
 pip install pandas -q
 
 python - <<END
