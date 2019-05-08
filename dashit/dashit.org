@@ -285,3 +285,15 @@ You can:
 * DASHit source code
 - =DASHit-seq= is implemented as a literate programming file which you can view here [[file:dashit-seq.org][here]].
 - You can view the =DASHit-reads= programs, =crispr_sites= and =optimize_guides=, [[https://github.com/czbiohub/special_ops_crispr_tools/tree/emperordali/guides_to_reads/crispr_sites][here]] and [[https://github.com/czbiohub/special_ops_crispr_tools/tree/emperordali/guides_to_reads/dashit][here]].
+
+
+* Fresh install
+
+1. Install =go=
+   #+BEGIN_SRC bash
+   brew install go
+   #+END_SRC
+
+   #+BEGIN_SRC bash
+   nix-env -i go
+   #+END_SRC

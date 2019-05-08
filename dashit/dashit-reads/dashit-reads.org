@@ -38,6 +38,8 @@ import threading
 import traceback
 import select
 import requests
+import atexit
+from requests import ConnectionError
 from ash import flash
 from pathlib import Path
 from tqdm import tqdm, trange
@@ -73,7 +75,7 @@ def get_offtargets(targets, c5, c10, c20):
             url = "http://localhost:8080/search?targets=%s&limits=%s"
             url = url % (",".join(map(str, targets[i:i+batch_size])), ",".join(map(str, [c5, c10, c20])))
             offtargets.update(parse_offtarget_server_response(requests.get(url, timeout=600)))
-    except (ConnectionResetError, ConnectionError):
+    except ConnectionError:
         log.error('Error contacting offtarget server')
         raise
 
@@ -128,6 +130,33 @@ Launch the off target filtering server.
 #+END_SRC
 
 #+BEGIN_SRC python
+def kill_external_process(proc):
+    """Handler called during an unexpected exit, to kill an external
+    process
+
+    Parameters
+    ----------
+    proc : `subprocess.Popen`
+        the process to kill
+    """
+
+    log.info("Unexpected program termination, cleaning up external "
+             f"process {proc.pid} {proc.args}")
+
+    proc.kill()
+
+def kill_offtarget_server(proc):
+    """Gracefully shutdown an offtarget server
+
+    Parameters
+    ----------
+    proc : `subprocess.Popen`
+        the offtarget server process, as returned by `launch_offtarget_server`
+    """
+
+    atexit.unregister(kill_external_process)
+    proc.kill()
+
 def launch_offtarget_server(offtarget_filename):
     """<<doc:launch_offtarget_server>>
 
@@ -159,6 +188,8 @@ def launch_offtarget_server(offtarget_filename):
     proc = subprocess.Popen(['/usr/bin/env', 'offtarget'], env=offtarget_env,
                             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
+    atexit.register(kill_external_process, proc=proc)
+    
     stdout_poll = select.poll()
     stdout_poll.register(proc.stdout)
 
@@ -220,6 +251,9 @@ def launch_offtarget_server(offtarget_filename):
     return proc
 #+END_SRC
 
+#+RESULTS:
+: None
+
 ** =check_offtarget_alive=
 #+NAME: doc:check_offtarget_alive
 #+BEGIN_SRC org
@@ -265,7 +299,7 @@ def check_offtarget_running():
     try:
         get_offtargets(["ACGT" * 5], 5, 9, 18)
         return True
-    except ConnectionResetError:
+    except ConnectionError:
         return False
 
 #+END_SRC
@@ -451,16 +485,6 @@ def main():
             log.error('Error starting ontarget filtering server')
             sys.exit(1)
 
-        # Catch SIGTERM/SIGINT to shutdown the offtarget server
-        def ontarget_handler(signal, frame):
-            global ontarget_proc
-            log.info('Killing ontarget server')
-            ontarget_proc.kill()
-            sys.exit(1)
-
-        signal.signal(signal.SIGINT, ontarget_handler)
-        signal.signal(signal.SIGTERM, ontarget_handler)
-
         log.info('Filtering ontarget guides')
 
         try:
@@ -487,7 +511,7 @@ def main():
         log.info('{} guides were not ontargets '
                  'in {}'.format(len(filtered_guides), args.ontarget))
         log.info('Killing ontarget server')
-        ontarget_proc.kill()            
+        kill_offtarget_server(ontarget_proc)
     else:
         log.info('ontarget file not specified with --ontarget, will not '
                  'perform any ontarget filtering')
@@ -500,16 +524,6 @@ def main():
             log.error("Error starting offtarget filtering server")
             sys.exit(1)
     
-        # Catch SIGTERM/SIGINT to shutdown the offtarget server
-        def handler(signal, frame):
-            global offtarget_proc
-            log.info('Killing offtarget server')
-            offtarget_proc.kill()
-            sys.exit(1)
-
-        signal.signal(signal.SIGINT, handler)
-        signal.signal(signal.SIGTERM, handler)
-
         log.info('Filtering offtarget guides')
 
         try:
@@ -534,7 +548,7 @@ def main():
         log.info('{} guides matched against offtargets '
                  'in {}'.format(len(filtered_guides) - num_filtered_before, args.offtarget))
         log.info('Killing offtarget server')
-        offtarget_proc.kill()
+        kill_offtarget_server(offtarget_proc)
             
         candidate_guides = [g for g in candidate_guides if g not in filtered_guides]            
     else:
