@@ -1,16 +1,4 @@
-# -*- org-confirm-babel-evaluate: nil; -*-
-#+TITLE: DASHit-reads
-#+AUTHOR: David Dynerman
-#+EMAIL: david.dynerman@czbiohub.org
-#+OPTIONS:
-#+PROPERTY: header-args:org :exports results :results replace
-
-* Offtarget and quality filtering
-:PROPERTIES:
-:header-args:python: :tangle dashit_reads/dashit_reads_filter.py :noweb yes
-:END:
-#+NAME: doc:dashit-reads-filter
-#+BEGIN_SRC org
+"""
 DASHit-reads-filter: Filter candidate guides for offtarget and quality.
 
 Given an offtarget file and quality parameters, remove candidate
@@ -20,11 +8,6 @@ quality.
 =DASHit-reads= performs offtarget and quality filtering on the
 sites-to-reads file (output of =crispr_sites -r=): it simply removes
 lines from this file that match offtargets or have low quality.
-#+END_SRC
-
-#+BEGIN_SRC python
-"""
-<<doc:dashit-reads-filter>>
 """
 import argparse
 import logging
@@ -80,26 +63,19 @@ def get_offtargets(targets, c5, c10, c20):
         raise
 
     return offtargets
-#+END_SRC
-** =filter_sites_poor_structure=
-#+NAME: doc:filter_sites_poor_structure
-#+BEGIN_SRC org
-Filter CRISPR sites due to poor structural reasons.
 
-A site will be removed if any of the following are true:
-
-1. G/C frequency too high (> 15/20) or too low (< 5/20)
-2. /Homopolymer/: more than 5 consecutive repeated nucleotides
-3. /Dinucleotide repeats/: the same two nucelotides alternate for > 3
-   repeats
-4. /Hairpin/: complementary subsequences near the start and end of a
-   site can bind, causing a hairpin
-#+END_SRC
-
-#+BEGIN_SRC python
 def filter_sites_poor_structure(sequences, filtered_sites, filter_parms):
     """
-    <<doc:filter_sites_poor_structure>>
+    Filter CRISPR sites due to poor structural reasons.
+    
+    A site will be removed if any of the following are true:
+    
+    1. G/C frequency too high (> 15/20) or too low (< 5/20)
+    2. /Homopolymer/: more than 5 consecutive repeated nucleotides
+    3. /Dinucleotide repeats/: the same two nucelotides alternate for > 3
+       repeats
+    4. /Hairpin/: complementary subsequences near the start and end of a
+       site can bind, causing a hairpin
 
     Parameters
     ----------
@@ -123,15 +99,7 @@ def filter_sites_poor_structure(sequences, filtered_sites, filter_parms):
 
     log.info('removed {} sites from consideration due to poor '
 	     'structure'.format(len(filtered_sites) - initial_num_filtered))
-#+END_SRC
 
-** =launch_offtarget_server=
-#+NAME: doc:launch_offtarget_server
-#+BEGIN_SRC org
-Launch the off target filtering server.
-#+END_SRC
-
-#+BEGIN_SRC python
 def kill_external_process(proc):
     """Handler called during an unexpected exit, to kill an external
     process
@@ -160,7 +128,7 @@ def kill_offtarget_server(proc):
     proc.kill()
 
 def launch_offtarget_server(offtarget_filename):
-    """<<doc:launch_offtarget_server>>
+    """Launch the off target filtering server.
 
     Parameters
     ----------
@@ -251,21 +219,10 @@ def launch_offtarget_server(offtarget_filename):
                     break
 
     return proc
-#+END_SRC
 
-#+RESULTS:
-: None
-
-** =check_offtarget_alive=
-#+NAME: doc:check_offtarget_alive
-#+BEGIN_SRC org
-Check that the offtarget server process is running. Log errors if not.
-#+END_SRC
-
-#+BEGIN_SRC python
 def check_offtarget_alive(offtarget_proc):
     """
-    <<doc:check_offtarget_alive>>
+    Check that the offtarget server process is running. Log errors if not.
 
     Parameters
     ----------
@@ -304,32 +261,9 @@ def check_offtarget_running():
     except ConnectionError:
         return False
 
-#+END_SRC
-
-
-
-
-** =parse_offtarget_server_response=
-The =special_ops_crispr_tools/offtarget= server returns an HTTP request with the off targets matches formatted like this:
-
-#+BEGIN_EXAMPLE
-'AAAAAAAAAAAAAAAAAAAA true\nGGGGGGGGGGGGGGGGGGGG false\nACTAGCCCCAATTTACGTCT false\n'
-#+END_EXAMPLE
-
-Here the sites are the CRISPR sites we asked about, and the text
-=true= and =false= indicates whether or not the site matched an
-offtarget.
-
-#+NAME: doc:parse_offtarget_server_response
-#+BEGIN_SRC org
-Parse the HTTP request returned from the off target server and return
-which CRISPR sites were filtered.
-#+END_SRC
-
-#+BEGIN_SRC python
 def parse_offtarget_server_response(response):
-    """
-    <<doc:parse_offtarget_server_response>>
+    """Parse the HTTP request returned from the off target server and return
+    """which CRISPR sites were filtered.
 
     Parameters
     ----------
@@ -343,6 +277,18 @@ def parse_offtarget_server_response(response):
 
     dictionary where `offtargets[site] == True` if `site` is an
     offtarget
+
+
+    Note
+    ----
+    The `special_ops_crispr_tools/offtarget` server returns an HTTP
+    request with the off targets matches formatted like this:
+
+    'AAAAAAAAAAAAAAAAAAAA true\nGGGGGGGGGGGGGGGGGGGG false\nACTAGCCCCAATTTACGTCT false\n'
+
+    Here the sites are the CRISPR sites we asked about, and the text
+    `true` and `false` indicates whether or not the site matched an
+    offtarget.
     """
 
     offtargets = defaultdict(bool)
@@ -352,10 +298,7 @@ def parse_offtarget_server_response(response):
             offtargets[line[0:20]] = True
 
     return offtargets
-#+END_SRC
 
-** Command line interface
-#+BEGIN_SRC python
 def main():
     parser = argparse.ArgumentParser(description='Filter guides in a '
                                      'sites-to-reads file based on offtargets '
@@ -581,6 +524,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-#+END_SRC
-
-

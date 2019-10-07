@@ -1,6 +1,9 @@
 # Vendored code
 vendor/
 
+# Local testing code
+test/
+
 # Ignore compiled binaries
 dashit/optimize_guides
 misc/score_guides

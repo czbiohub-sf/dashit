@@ -51,6 +51,12 @@ install: build-optimize-guides
 	cd dashit-reads && $(MAKE) install-develop
 # ^^^^
 
+# this needs to be merged in from filte rreads
+install-develop:
+	pip3 install -r requirements.txt
+	python3 setup.py develop
+#^^^^
+
 install-dashit: build-optimize-guides
 	cd dashit && $(MAKE) install
 	install dashit/optimize_guides $(PREFIX)/bin
