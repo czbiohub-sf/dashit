@@ -1,5 +1,4 @@
-#+TITLE: DASHit
-#+SUBTITLE: Automated design of Cas9 guide RNAs for DASH experiments
+#+TITLE: DASHit: Guide design for DASH experiments
 #+AUTHOR: David Dynerman
 #+EMAIL: david.dynerman@czbiohub.org
 #+OPTIONS: toc:nil num:nil
