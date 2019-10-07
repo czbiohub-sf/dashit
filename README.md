@@ -6,7 +6,7 @@
 
 1. <a name="dash"></a> Gu, W. et al. [Depletion of Abundant Sequences by Hybridization (DASH): using Cas9 to remove unwanted high-abundance species in sequencing libraries and molecular counting applications.](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-016-0904-5) Genome Biology 17, 41 (2016).
 
-Made with :hearts: and :microscope: by the CZ Biohub Data Science Team.
+Made with :hearts: and :microscope: by the [Biohub](https://www.czbiohub.org) Data Science Team.
 
 ## Documentation
 Please visit [http://dashit.czbiohub.org](http://dashit.czbiohub.org) for documentation and examples.
