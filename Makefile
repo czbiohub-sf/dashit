@@ -17,7 +17,7 @@ get-vendor-deps:
 	go get github.com/shenwei356/bio/seqio/fastx
 	go get github.com/shenwei356/xopen
 
-build-components: build-score-guides build-special-ops-crispr-tools install-special-ops-crispr-tools
+build-components: build-score-guides build-optimize-guides build-special-ops-crispr-tools install-special-ops-crispr-tools
 
 build-score-guides:
 	cd misc && go build -o score_guides
@@ -40,26 +40,17 @@ check-license-agreement:
 install: check-license-agreement check-basic-deps
 	$(MAKE) install-components
 
-install-components: get-vendor-deps build-components install-dashit install-score-guides
-
-# These need to be merged in VV
+install-components: get-vendor-deps build-components install-dashit install-score-guides install-dashit-filter
 
 build-optimize-guides:
 	go build -o optimize_guides
 
-install: build-optimize-guides
-	cd dashit-reads && $(MAKE) install-develop
-# ^^^^
-
-# this needs to be merged in from filte rreads
-install-develop:
+install-dashit-filter:
 	pip3 install -r requirements.txt
 	python3 setup.py develop
-#^^^^
 
 install-dashit: build-optimize-guides
-	cd dashit && $(MAKE) install
-	install dashit/optimize_guides $(PREFIX)/bin
+	install optimize_guides $(PREFIX)/bin
 
 test:
 	cd misc && go test -v
