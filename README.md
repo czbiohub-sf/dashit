@@ -9,9 +9,9 @@
 ## Installation
 `DASHit` runs on Linux and macOS. Installing `DASHit` requires
 
-1. A C++ compiler that supports C++11, e.g., a recent version of =g++= or =clang=
-2. =go= version 1.9 or later
-3. =python3=
+1. A C++ compiler that supports C++11, e.g., a recent version of `g++` or `clang`
+2. `go` version 1.9 or later
+3. `python3`
 
 To install:
 
@@ -53,6 +53,5 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 ### Previous versions
-Old versions of DASHit (pre 2.0), were licensed under the hybrid [[./old-dashit-1.0-license.md][Biohub
-License]], which was free for non-profit use, but required a separate
+Old versions of DASHit (pre 2.0), were licensed under the hybrid [Biohub License](./old-dashit-1.0.md), which was free for non-profit use, but required a separate
 agreement for commercial use.
