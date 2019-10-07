@@ -42,7 +42,16 @@ install: check-license-agreement check-basic-deps
 
 install-components: get-vendor-deps build-components install-dashit install-score-guides
 
-install-dashit:
+# These need to be merged in VV
+
+build-optimize-guides:
+	go build -o optimize_guides
+
+install: build-optimize-guides
+	cd dashit-reads && $(MAKE) install-develop
+# ^^^^
+
+install-dashit: build-optimize-guides
 	cd dashit && $(MAKE) install
 	install dashit/optimize_guides $(PREFIX)/bin
 
