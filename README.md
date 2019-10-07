@@ -20,6 +20,8 @@ On macOS, the quickest way to install these dependencies is via [homebrew](https
 ```shell
 brew install python
 brew install go
+# The xcode command line utilities will install clang
+xcode-select --install
 ```
 ### DASHit
 Then, to install DASHit:
