@@ -17,7 +17,7 @@ get-vendor-deps:
 	go get github.com/shenwei356/bio/seqio/fastx
 	go get github.com/shenwei356/xopen
 
-build-components: build-score-guides build-special-ops-crispr-tools install-special-ops-crispr-tools
+build-components: build-score-guides build-optimize-guides build-special-ops-crispr-tools install-special-ops-crispr-tools
 
 build-score-guides:
 	cd misc && go build -o score_guides
@@ -34,17 +34,20 @@ install-special-ops-crispr-tools:
 check-basic-deps:
 	bash check_basic_deps.sh || exit 1
 
-check-license-agreement:
-	bash check_license.sh || exit 1
-
-install: check-license-agreement check-basic-deps
+install: check-basic-deps
 	$(MAKE) install-components
 
-install-components: get-vendor-deps build-components install-dashit install-score-guides
+install-components: get-vendor-deps build-components install-dashit install-score-guides install-dashit-filter
 
-install-dashit:
-	cd dashit && $(MAKE) install
-	install dashit/optimize_guides $(PREFIX)/bin
+build-optimize-guides:
+	go build -o optimize_guides
+
+install-dashit-filter:
+	pip3 install -r requirements.txt
+	python3 setup.py develop
+
+install-dashit: build-optimize-guides
+	install optimize_guides $(PREFIX)/bin
 
 test:
 	cd misc && go test -v
