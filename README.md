@@ -6,6 +6,12 @@
 
 1. <a name="dash"></a> Gu, W. et al. [Depletion of Abundant Sequences by Hybridization (DASH): using Cas9 to remove unwanted high-abundance species in sequencing libraries and molecular counting applications.](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-016-0904-5) Genome Biology 17, 41 (2016).
 
+Made with :hearts: and :microscope: by the CZ Biohub Data Science Team.
+
+## Documentation
+Please visit [http://dashit.czbiohub.org](http://dashit.czbiohub.org) for documentation and examples.
+
+
 ## Installation
 `DASHit` runs on Linux and macOS. 
 ### Dependencies
@@ -44,9 +50,6 @@ PREFIX=$HOME make install
 
 **Note:** At least the `vendor/special_ops_crispr_tools/offtarget/offtarget` binary must be in your `PATH` in
 order for `dashit_filter` to work.
-
-## Documentation
-Please visit [http://dashit.czbiohub.org](http://dashit.czbiohub.org) for documentation and examples.
 
 ## License
 Copyright 2019 Chan-Zuckerberg Biohub
