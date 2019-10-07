@@ -2,18 +2,27 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-`DASHit` is a collection of software for the automated design and evaluation of Cas9 guide RNAs for DASH experiments [1](#dash).
+`DASHit` is a collection of software for the automated design and evaluation of Cas9 guide RNAs for DASH experiments ([1](#dash)).
 
 1. <a name="dash"></a> Gu, W. et al. [Depletion of Abundant Sequences by Hybridization (DASH): using Cas9 to remove unwanted high-abundance species in sequencing libraries and molecular counting applications.](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-016-0904-5) Genome Biology 17, 41 (2016).
 
 ## Installation
-`DASHit` runs on Linux and macOS. Installing `DASHit` requires
+`DASHit` runs on Linux and macOS. 
+### Dependencies
+Installing `DASHit` requires
 
 1. A C++ compiler that supports C++11, e.g., a recent version of `g++` or `clang`
 2. `go` version 1.9 or later
 3. `python3`
 
-To install:
+On macOS, the quickest way to install these dependencies is via [homebrew](https://brew.sh/). Once homebrew is installed, you can run
+
+```shell
+brew install python
+brew install go
+```
+### DASHit
+Then, to install DASHit:
 
 ```shell
 git clone https://github.com/czbiohub/dashit
