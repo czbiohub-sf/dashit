@@ -1,4 +1,5 @@
-#+TITLE: =DASHit=: Automated design of Cas9 guide RNAs for DASH experiments
+#+TITLE: DASHit
+#+SUBTITLE: Automated design of Cas9 guide RNAs for DASH experiments
 #+AUTHOR: David Dynerman
 #+EMAIL: david.dynerman@czbiohub.org
 #+OPTIONS: toc:nil num:nil
@@ -35,7 +36,7 @@ PREFIX=$HOME make install
 order for =dashit_filter= to work.
 
 * Documentation
-Please visit [[https://dashit.czbiohub.org][https://dashit.czbiohub.org]] for documentation and examples.
+Please visit [[http://dashit.czbiohub.org][http://dashit.czbiohub.org]] for documentation and examples.
 
 * License
 Copyright 2019 Chan-Zuckerberg Biohub
