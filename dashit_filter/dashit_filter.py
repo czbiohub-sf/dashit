@@ -1,11 +1,11 @@
 """
-DASHit-reads-filter: Filter candidate guides for offtarget and quality.
+DASHit_filter: Filter candidate guides for offtarget and quality.
 
 Given an offtarget file and quality parameters, remove candidate
 guides from a sites-to-reads file that hit offtargets or are of low
 quality.
 
-=DASHit-reads= performs offtarget and quality filtering on the
+=DASHit= performs offtarget and quality filtering on the
 sites-to-reads file (output of =crispr_sites -r=): it simply removes
 lines from this file that match offtargets or have low quality.
 """
@@ -24,7 +24,7 @@ import requests
 import atexit
 from requests import ConnectionError
 from pathlib import Path
-from dashit_reads.flash import poor_structure
+from dashit_filter.flash import poor_structure
 from tqdm import tqdm, trange
 from collections import defaultdict
 
@@ -146,7 +146,7 @@ def launch_offtarget_server(offtarget_filename):
     if check_offtarget_running():
         log.error('An on/offtarget filtering server is already running on the '
                   'default port. Kill all offtarget servers before running '
-                  'dashit-filter-reads')
+                  'dashit_filter')
         log.error('e.g., killall offtarget')
         return None
     
@@ -263,7 +263,7 @@ def check_offtarget_running():
 
 def parse_offtarget_server_response(response):
     """Parse the HTTP request returned from the off target server and return
-    """which CRISPR sites were filtered.
+       which CRISPR sites were filtered.
 
     Parameters
     ----------

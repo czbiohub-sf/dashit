@@ -1,15 +1,15 @@
 from setuptools import setup
 
 setup(
-    name='dashit_reads',
-    version='1.0',
-    description='DASHit-reads',
+    name='dashit_filter',
+    version='2.0',
+    description='Filter DASHit guides RNA sequences for quality and on/offtargets',
     author='David Dynerman',
     author_email='david.dynerman@czbiohub.org',
-    packages=['dashit_reads'],
+    packages=['dashit_filter'],
     entry_points={
         'console_scripts': [
-            'dashit-reads-filter=dashit_reads.dashit_reads_filter:main',
+            'dashit_filter=dashit_filter.dashit_filter:main',
         ],
     },    
 )
