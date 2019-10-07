@@ -6,7 +6,7 @@
 
 1. <a name="dash"></a> Gu, W. et al. [Depletion of Abundant Sequences by Hybridization (DASH): using Cas9 to remove unwanted high-abundance species in sequencing libraries and molecular counting applications.](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-016-0904-5) Genome Biology 17, 41 (2016).
 
-Made with :hearts: and :microscope: by the [Biohub](https://www.czbiohub.org) Data Science Team.
+Made in SF with :hearts: and :microscope: by the [Biohub](https://www.czbiohub.org) Data Science Team.
 
 ## Documentation
 Please visit [http://dashit.czbiohub.org](http://dashit.czbiohub.org) for documentation and examples.
@@ -48,8 +48,19 @@ binaries, set `PREFIX`, e.g.,
 PREFIX=$HOME make install
 ```
 
-**Note:** At least the `vendor/special_ops_crispr_tools/offtarget/offtarget` binary must be in your `PATH` in
-order for `dashit_filter` to work.
+> **Note:** At least the `vendor/special_ops_crispr_tools/offtarget/offtarget` binary must be in your `PATH` in order for `dashit_filter` to work.
+
+To test that everything installed correctly, open up a new shell, activate the virtualenv and take DASHit for a spin:
+
+```shell
+source ~/.virtualenvs/dashit/bin/activate
+dashit_filter --help
+crispr_sites -h
+optimize_guides
+echo "AAAAAAAAAAAAAAAAAAAA" > /tmp/mysequence.txt && HOST=file:///tmp/mysequence.txt offtarget
+```
+
+Press `CTRL+C` to exit `offtarget`.
 
 ## License
 Copyright 2019 Chan-Zuckerberg Biohub
