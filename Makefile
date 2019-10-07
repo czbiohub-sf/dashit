@@ -1,3 +1,4 @@
+PREFIX ?= /usr/local
 SHELL := /bin/bash
 DATA_DIR = /scratch
 EXAMPLE_DASH_READS_DIR = ${DATA_DIR}/DASHit-reads
@@ -6,8 +7,6 @@ EXAMPLE_OUTPUT_DIR = ${DATA_DIR}/DASHit-example-output
 VENDOR_DIR = vendor
 SPECIAL_OPS_REPO = https://github.com/czbiohub/special_ops_crispr_tools.git
 SPECIAL_OPS_DIR = special_ops_crispr_tools
-BIN_DIR = ${HOME}/bin
-
 
 SEQTK := $(shell command -v seqtk 2> /dev/null)
 
@@ -18,17 +17,19 @@ get-vendor-deps:
 	go get github.com/shenwei356/bio/seqio/fastx
 	go get github.com/shenwei356/xopen
 
-build-components: build-score-guides build-special-ops-crispr-tools
+build-components: build-score-guides build-special-ops-crispr-tools install-special-ops-crispr-tools
 
 build-score-guides:
 	cd misc && go build -o score_guides
 
 install-score-guides:
-	mkdir -p $(BIN_DIR)
-	cp misc/score_guides $(BIN_DIR)
+	install misc/score_guides $(PREFIX)/bin
 
 build-special-ops-crispr-tools:
-	cd $(VENDOR_DIR)/$(SPECIAL_OPS_DIR) && $(MAKE)
+	cd $(VENDOR_DIR)/$(SPECIAL_OPS_DIR) && $(MAKE) 
+
+install-special-ops-crispr-tools:
+	cd $(VENDOR_DIR)/$(SPECIAL_OPS_DIR) && $(MAKE) install PREFIX=$(PREFIX)
 
 check-basic-deps:
 	bash check_basic_deps.sh || exit 1
@@ -43,8 +44,7 @@ install-components: get-vendor-deps build-components install-dashit install-scor
 
 install-dashit:
 	cd dashit && $(MAKE) install
-	mkdir -p $(BIN_DIR)
-	cp dashit/optimize_guides $(BIN_DIR)
+	install dashit/optimize_guides $(PREFIX)/bin
 
 test:
 	cd misc && go test -v

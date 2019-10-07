@@ -23,8 +23,8 @@ import select
 import requests
 import atexit
 from requests import ConnectionError
-from ash import flash
 from pathlib import Path
+from dashit_reads.flash import poor_structure
 from tqdm import tqdm, trange
 from collections import defaultdict
 
@@ -79,13 +79,12 @@ def filter_sites_poor_structure(sequences, filtered_sites, filter_parms):
 
     Parameters
     ----------
-    sequences : list of `common.Gene`
+    sequences : list
 	the input sequences with CRISPR targets identified
     filtered_sites : dict
 	dict containing which sites have been filtered
     filter_parms : dict
-	parameters controlling poor structure filtering,
-	see `flash.poor_structure`
+	parameters controlling poor structure filtering
     """
 
     log.info('filtering sites for poor structure '
@@ -93,7 +92,10 @@ def filter_sites_poor_structure(sequences, filtered_sites, filter_parms):
 
     initial_num_filtered = len(filtered_sites)
 
-    filtered_sites.update(flash.poor_structure(sequences, filter_parms))
+    for seq in sequences:
+        reasons = poor_structure(seq, filter_parms, need_explanation=True)
+        if len(reasons) > 0:
+            filtered_sites.update({seq: reasons})
 
     log.info('removed {} sites from consideration due to poor '
 	     'structure'.format(len(filtered_sites) - initial_num_filtered))
