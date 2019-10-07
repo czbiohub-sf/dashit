@@ -34,10 +34,7 @@ install-special-ops-crispr-tools:
 check-basic-deps:
 	bash check_basic_deps.sh || exit 1
 
-check-license-agreement:
-	bash check_license.sh || exit 1
-
-install: check-license-agreement check-basic-deps
+install: check-basic-deps
 	$(MAKE) install-components
 
 install-components: get-vendor-deps build-components install-dashit install-score-guides install-dashit-filter

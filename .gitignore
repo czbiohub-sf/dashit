@@ -5,7 +5,7 @@ vendor/
 test/
 
 # Ignore compiled binaries
-dashit/optimize_guides
+optimize_guides
 misc/score_guides
 
 ### --- Python/IPython/Jupyter .gitignore --- ###
