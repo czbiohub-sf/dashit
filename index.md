@@ -59,7 +59,7 @@ For even more detail, please see the `DASHit` paper ([2](#dashit)).
       :heavy_exclamation_mark: For the ontarget and offtarget files, run `crispr_sites` **without** the `-r` flag.
 3. Filter your candidate guide RNAs, removing those with low-quality structure (GC content, homopolymer, dinucleotide repeats, and hairpins). Optionally remove all guides RNAs present in `offtarget_sites.txt`, and those *not* present in `ontarget_sites.txt`
    ```shell
-   dashit_filter --gc_freq_min 3 --gc_freq_max 5 --ontarget ontarget.txt --offtarget offtarget.txt input_sites_to_reads.txt > input_sites_to_reads_filtered.txt
+   dashit_filter --gc_freq_min 5 --gc_freq_max 15 --ontarget ontarget.txt --offtarget offtarget.txt input_sites_to_reads.txt > input_sites_to_reads_filtered.txt
    ```
    :flashlight: Run `dashit_filter --help` for an explanation of the quality filtering and to learn how to change quality thresholds.
    
