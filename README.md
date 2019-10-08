@@ -20,8 +20,9 @@ Installing `DASHit` requires
 1. A C++ compiler that supports C++11, e.g., a recent version of `g++` or `clang`
 2. `go` version 1.9 or later
 3. `python3`
+	4. *(Optional, but recommended)* [seqtk](https://github.com/lh3/seqtk) is a useful tool for manipulating FASTQ/A files. Once you compile `seqtk`, place it in your `PATH` (e.g., `install seqtk /usr/local/bin`)
 
-On macOS, the quickest way to install these dependencies is via [homebrew](https://brew.sh/). Once homebrew is installed, you can run
+On macOS, the quickest way to install `go` and `python3` is via [homebrew](https://brew.sh/). Once homebrew is installed, you can run
 
 ```shell
 brew install python
@@ -29,6 +30,9 @@ brew install go
 # The xcode command line utilities will install clang
 xcode-select --install
 ```
+
+	
+
 ### DASHit
 Then, to install DASHit:
 
