@@ -62,12 +62,14 @@ For even more detail, please see the DASHit paper ([2](#dashit)).
    dashit_filter --gc_freq_min 3 --gc_freq_max 5 --ontarget ontarget.txt --offtarget offtarget.txt input_sites_to_reads.txt > input_sites_to_reads_filtered.txt
    ```
    :flashlight: Run `dashit_filter --help` for an explanation of the quality filtering and to learn how to change quality thresholds.
+   
    :heavy_exclamation_mark: ontarget and offtarget filtering require port 8080 to be available on your computer.
 4. Find 300 guides that hit the largest number of reads
    ```shell
    optimize_guides input_sites_to_reads_filtered.txt 300 1 > guides.csv
    ```
    :flashlight: You should experiment with different numbers of guides 
+   
    :flashlight: the `number of times to cover each read` option, here set to 1, is how many guides need to hit a read in `input.fasta` before that read is considered covered. In principle you could use this for additional redundancy, but in practice we've never needed anything other than 1
 5. Examine `guides.csv` to see how we did. Open this file in Excel and plot the last column. This plot will show the cumulative number of reads hit in `input.fasta` the designed guides hit. You can use this plot to pick the number of guides to use: look for the "elbow" in the plot, and notice where diminishing returns on the number of guides kicks in.
    ![](./elbow.png)
