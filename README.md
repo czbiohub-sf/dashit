@@ -80,5 +80,5 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 ### Previous versions
-Old versions of DASHit (pre 2.0), were licensed under the hybrid [Biohub License](./old-dashit-1.0.md), which was free for non-profit use, but required a separate
+Previous versions of DASHit were licensed under the hybrid [Biohub License](./old-dashit-1.0.md), which was free for non-profit use, but required a separate
 agreement for commercial use.
