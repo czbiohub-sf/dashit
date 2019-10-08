@@ -14,7 +14,7 @@ sequences of interest.
 
 DASHit ([2](#dashit)) is the software that designs Cas9-gRNAs to target your particular experiment.
 
-For more details on the wet lab side, [check out our actual protocol.](https://dx.doi.org/10.17504/protocols.io.6rjhd4n)([4](#dash-protocol))
+For more details on the wet lab side, [check out our actual protocol.](https://dx.doi.org/10.17504/protocols.io.6rjhd4n)([3](#dash-protocol))
 
 1. <a name="dash"></a> Gu, W. et al. [Depletion of Abundant Sequences by Hybridization (DASH): using Cas9 to remove unwanted high-abundance species in sequencing libraries and molecular counting applications.](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-016-0904-5) Genome Biology 17, 41 (2016).
 2. <a name="dashit"></a> Dynerman, D and Lyden, A. et al. `Preprint soon!`
