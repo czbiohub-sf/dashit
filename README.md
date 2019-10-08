@@ -1,5 +1,4 @@
 # DASHit: Guide design for DASH experiments
-
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 `DASHit` is a collection of software for the automated design and evaluation of Cas9 guide RNAs for DASH experiments ([1](#dash)).
@@ -11,7 +10,6 @@ Made in SF with :hearts: and :microscope: by the [Biohub](https://www.czbiohub.o
 ## Documentation
 Please visit [http://dashit.czbiohub.org](http://dashit.czbiohub.org) for documentation and examples.
 
-
 ## Installation
 `DASHit` runs on Linux and macOS. 
 ### Dependencies
@@ -20,7 +18,7 @@ Installing `DASHit` requires
 1. A C++ compiler that supports C++11, e.g., a recent version of `g++` or `clang`
 2. `go` version 1.9 or later
 3. `python3`
-	4. *(Optional, but recommended)* [seqtk](https://github.com/lh3/seqtk) is a useful tool for manipulating FASTQ/A files. Once you compile `seqtk`, place it in your `PATH` (e.g., `install seqtk /usr/local/bin`)
+4. *(Optional, but recommended)* [seqtk](https://github.com/lh3/seqtk) is a useful tool for manipulating FASTQ/A files. Once you compile `seqtk`, place it in your `PATH` (e.g., `install seqtk /usr/local/bin`)
 
 On macOS, the quickest way to install `go` and `python3` is via [homebrew](https://brew.sh/). Once homebrew is installed, you can run
 
