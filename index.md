@@ -44,12 +44,17 @@ For even more detail, please see the `DASHit` paper ([2](#dashit)).
    ```shell
    seqtk -A input.fastq > input.fasta
    ```
-2. Run `crispr_sites -r` to find candidate Cas9-gRNAs in your input.
+2. Trim adaptor sequences using [cutadapt](https://cutadapt.readthedocs.io/en/stable/installation.html) (or another tool). This will avoid designing a guide which cuts your adaptor sequence in it, rendering your library unsequencable. 
    ```shell
-   cat input.fasta | crispr_sites -r >! input_sites_to_reads.txt
+   cutadapt -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC -o cut-input.fasta input.fasta
+   ```
+
+3. Run `crispr_sites -r` to find candidate Cas9-gRNAs in your input.
+   ```shell
+   cat cut-input.fasta | crispr_sites -r >! input_sites_to_reads.txt
    ```
    :flashlight: Each line of `input_sites_to_reads.txt` contains a 20-mer Cas9 guide RNA found in `input.fasta`, together with a list of reads that 20-mer appeared in
-3. *(Optional, but you'll probably want this)* You may want to restrict your gRNAs to a particular *ontarget* region, and also disqualify guides that hit some *offtarget* region.
+4. *(Optional, but you'll probably want this)* You may want to restrict your gRNAs to a particular *ontarget* region, and also disqualify guides that hit some *offtarget* region.
    1. Obtain FASTA files of your ontarget and offtarget regions
    2. Run `crispr_sites` to find ontarget and offtarget gRNAs
       ```shell
@@ -57,24 +62,24 @@ For even more detail, please see the `DASHit` paper ([2](#dashit)).
       cat offtarget.fasta | crispr_sites >! offtarget_sites.txt
 	  ```
       :heavy_exclamation_mark: For the ontarget and offtarget files, run `crispr_sites` **without** the `-r` flag.
-3. Filter your candidate guide RNAs, removing those with low-quality structure (GC content, homopolymer, dinucleotide repeats, and hairpins). Optionally remove all guides RNAs present in `offtarget_sites.txt`, and those *not* present in `ontarget_sites.txt`
+5. Filter your candidate guide RNAs, removing those with low-quality structure (GC content, homopolymer, dinucleotide repeats, and hairpins). Optionally remove all guides RNAs present in `offtarget_sites.txt`, and those *not* present in `ontarget_sites.txt`
    ```shell
    dashit_filter --gc_freq_min 5 --gc_freq_max 15 --ontarget ontarget.txt --offtarget offtarget.txt input_sites_to_reads.txt > input_sites_to_reads_filtered.txt
    ```
    :flashlight: Run `dashit_filter --help` for an explanation of the quality filtering and to learn how to change quality thresholds.
    
    :heavy_exclamation_mark: ontarget and offtarget filtering require port 8080 to be available on your computer.
-4. Find 300 guides that hit the largest number of reads
+6. Find 300 guides that hit the largest number of reads
    ```shell
    optimize_guides input_sites_to_reads_filtered.txt 300 1 > guides.csv
    ```
    :flashlight: You should experiment with different numbers of guides 
    
    :flashlight: the `number of times to cover each read` option, here set to 1, is how many guides need to hit a read in `input.fasta` before that read is considered covered. In principle you could use this for additional redundancy, but in practice we've never needed anything other than 1
-5. Examine `guides.csv` to see how we did. Open this file in Excel and plot the last column. This plot will show the cumulative number of reads hit in `input.fasta` the designed guides hit. You can use this plot to pick the number of guides to use: look for the "elbow" in the plot, and notice where diminishing returns on the number of guides kicks in.
+7. Examine `guides.csv` to see how we did. Open this file in Excel and plot the last column. This plot will show the cumulative number of reads hit in `input.fasta` the designed guides hit. You can use this plot to pick the number of guides to use: look for the "elbow" in the plot, and notice where diminishing returns on the number of guides kicks in.
    ![](./elbow.png)
    *We see around 50 guides are already covering almost 100% of our `input.fasta`. Ordering 300 guides would be overkill, in this case*
-6. Score how well your guides do against `input.fasta` - this should match the plot from `guides.csv`.
+8. Score how well your guides do against `input.fasta` - this should match the plot from `guides.csv`.
    ```shell
    score_guides guides.csv input.fasta
    ```
