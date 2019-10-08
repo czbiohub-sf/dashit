@@ -1,3 +1,6 @@
+title: DASHit
+description: Automatically create CRISPR guides for DASH
 theme: jekyll-theme-slate
 plugins:
   - jemoji
+
