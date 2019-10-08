@@ -12,7 +12,7 @@ your repetitive sequences into small fragments. You then size select
 and amplify your remaining DNA, which should contain most or only your
 sequences of interest. 
 
-DASHit ([2](#dashit)) is the software that designs Cas9-gRNAs to target your particular experiment.
+`DASHit` ([2](#dashit)) is the software that designs Cas9-gRNAs to target your particular experiment.
 
 For more details on the wet lab side, [check out our actual protocol.](https://dx.doi.org/10.17504/protocols.io.6rjhd4n)([3](#dash-protocol))
 
@@ -22,16 +22,16 @@ For more details on the wet lab side, [check out our actual protocol.](https://d
 
 # Installing 
 
-Please visit the [GitHub repository](https://www.github.com/czbiohub/dashit) for instructions on how to install DASHit.
+Please visit the [GitHub repository](https://www.github.com/czbiohub/dashit) for instructions on how to install `DASHit`.
 
 # The Idea
 In order for DASH to be maximally effective, we want to pick the fewest guides which hit the largest possible number of sequences that you want depleted. The best way to find the over-abundant sequences in your data is to look at it!
 
-DASHit uses reads from a preliminary, low-depth sequencing of your samples to identify abundant CRISPR-Cas9 cut sites. It has a filtering function for the guides it identifies, which allows you to specify on and off target sequences, and filter based on GC content and secondary structure. It then computes an optimized guide list by producing a set number of guides which hit the largest number of sequences in the preliminary data.
+`DASHit` uses reads from a preliminary, low-depth sequencing of your samples to identify abundant CRISPR-Cas9 cut sites. It has a filtering function for the guides it identifies, which allows you to specify on and off target sequences, and filter based on GC content and secondary structure. It then computes an optimized guide list by producing a set number of guides which hit the largest number of sequences in the preliminary data.
 
 Next, we'll describe the [DASHit pipeline](#dashit-pipeline), or, you can [skip ahead to a real example](#a-real-example).
 
-For even more detail, please see the DASHit paper ([2](#dashit)). 
+For even more detail, please see the `DASHit` paper ([2](#dashit)). 
 
 # DASHit Pipeline
 `DASHit` is a collection of several tools you can use to design gRNAs that target the sequences you want.
