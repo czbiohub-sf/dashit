@@ -42,7 +42,7 @@ For even more detail, please see the `DASHit` paper ([2](#dashit)).
 
 1. Use [seqtk](https://github.com/lh3/seqtk) (or another tool) to convert the input to FASTA format
    ```shell
-   seqtk -A input.fastq > input.fasta
+   seqtk seq -A input.fastq > input.fasta
    ```
 2. Trim adaptor sequences using [cutadapt](https://cutadapt.readthedocs.io/en/stable/installation.html) (or another tool). This will avoid designing a guide which cuts your adaptor sequence in it, rendering your library unsequencable. 
    ```shell
