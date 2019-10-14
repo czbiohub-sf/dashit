@@ -48,7 +48,7 @@ For even more detail, please see the `DASHit` paper ([2](#dashit)).
    ```shell
    cutadapt -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC -o cut-input.fasta input.fasta
    ```
-
+   :heavy_exclamation_mark: The above is an **example** command for trimming adapters from NEBNext paired-end libraries. You will need to change the adapter sequence if you used a different library prep method.
 3. Run `crispr_sites -r` to find candidate Cas9-gRNAs in your input.
    ```shell
    cat cut-input.fasta | crispr_sites -r > input_sites_to_reads.txt
