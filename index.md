@@ -51,15 +51,15 @@ For even more detail, please see the `DASHit` paper ([2](#dashit)).
 
 3. Run `crispr_sites -r` to find candidate Cas9-gRNAs in your input.
    ```shell
-   cat cut-input.fasta | crispr_sites -r >! input_sites_to_reads.txt
+   cat cut-input.fasta | crispr_sites -r > input_sites_to_reads.txt
    ```
    :flashlight: Each line of `input_sites_to_reads.txt` contains a 20-mer Cas9 guide RNA found in `input.fasta`, together with a list of reads that 20-mer appeared in
 4. *(Optional, but you'll probably want this)* You may want to restrict your gRNAs to a particular *ontarget* region, and also disqualify guides that hit some *offtarget* region.
    1. Obtain FASTA files of your ontarget and offtarget regions
    2. Run `crispr_sites` to find ontarget and offtarget gRNAs
       ```shell
-	  cat ontarget.fasta | crispr_sites >! ontarget_sites.txt
-      cat offtarget.fasta | crispr_sites >! offtarget_sites.txt
+	  cat ontarget.fasta | crispr_sites > ontarget_sites.txt
+      cat offtarget.fasta | crispr_sites > offtarget_sites.txt
 	  ```
       :heavy_exclamation_mark: For the ontarget and offtarget files, run `crispr_sites` **without** the `-r` flag.
 5. Filter your candidate guide RNAs, removing those with low-quality structure (GC content, homopolymer, dinucleotide repeats, and hairpins). Optionally remove all guides RNAs present in `offtarget_sites.txt`, and those *not* present in `ontarget_sites.txt`
