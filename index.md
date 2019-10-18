@@ -1,4 +1,4 @@
-Got junk sequences in your sequencing FASTQs? 
+Got junk sequences in your sequencing FASTQs?
 
 Many experiments are riddled with repetitive sequences which are of no
 value to the scientific question you are asking. Some examples include
@@ -10,7 +10,7 @@ In the lab, you take final NGS libraries ready for sequencing, and
 combine them with pre-programmed Cas9 guide RNAs (gRNAs) which cut up
 your repetitive sequences into small fragments. You then size select
 and amplify your remaining DNA, which should contain most or only your
-sequences of interest. 
+sequences of interest.
 
 `DASHit` ([2](#dashit)) is the software that designs Cas9-gRNAs to target your particular experiment.
 
@@ -18,9 +18,9 @@ For more details on the wet lab side, [check out our actual protocol.](https://d
 
 1. <a name="dash"></a> Gu, W. et al. [Depletion of Abundant Sequences by Hybridization (DASH): using Cas9 to remove unwanted high-abundance species in sequencing libraries and molecular counting applications.](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-016-0904-5) Genome Biology 17, 41 (2016).
 2. <a name="dashit"></a> Dynerman, D and Lyden, A. et al. `Preprint soon!`
-3. <a name="dash-protocol"></a> Lyden, A. et al. [DASH Protocol V.4](https://https://dx.doi.org/10.17504/protocols.io.6rjhd4n).
+3. <a name="dash-protocol"></a> Lyden, A. et al. [DASH Protocol V.4](https://dx.doi.org/10.17504/protocols.io.6rjhd4n).
 
-# Installing 
+# Installing
 
 Please visit the [GitHub repository](https://www.github.com/czbiohub/dashit) for instructions on how to install `DASHit`.
 
@@ -31,20 +31,20 @@ In order for DASH to be maximally effective, we want to pick the fewest guides w
 
 Next, we'll describe the [DASHit pipeline](#dashit-pipeline), or, you can [skip ahead to a real example](#a-real-example).
 
-For even more detail, please see the `DASHit` paper ([2](#dashit)). 
+For even more detail, please see the `DASHit` paper ([2](#dashit)).
 
 # DASHit Pipeline
 `DASHit` is a collection of several tools you can use to design gRNAs that target the sequences you want.
 
 **INPUT:** A FASTQ file `input.fastq` containing the abundant sequences you want to target for depletion.
 
-> **NOTE**: We usually subsample `input.fastq` down to several hundred thousand reads with `seqtk` before proceeding. 
+> **NOTE**: We usually subsample `input.fastq` down to several hundred thousand reads with `seqtk` before proceeding.
 
 1. Use [seqtk](https://github.com/lh3/seqtk) (or another tool) to convert the input to FASTA format
    ```shell
    seqtk -A input.fastq > input.fasta
    ```
-2. Trim adaptor sequences using [cutadapt](https://cutadapt.readthedocs.io/en/stable/installation.html) (or another tool). This will avoid designing a guide which cuts your adaptor sequence in it, rendering your library unsequencable. 
+2. Trim adaptor sequences using [cutadapt](https://cutadapt.readthedocs.io/en/stable/installation.html) (or another tool). This will avoid designing a guide which cuts your adaptor sequence, rendering your library unsequencable.
    ```shell
    cutadapt -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC -o cut-input.fasta input.fasta
    ```
@@ -67,14 +67,14 @@ For even more detail, please see the `DASHit` paper ([2](#dashit)).
    dashit_filter --gc_freq_min 5 --gc_freq_max 15 --ontarget ontarget.txt --offtarget offtarget.txt input_sites_to_reads.txt > input_sites_to_reads_filtered.txt
    ```
    :flashlight: Run `dashit_filter --help` for an explanation of the quality filtering and to learn how to change quality thresholds.
-   
+
    :heavy_exclamation_mark: ontarget and offtarget filtering require port 8080 to be available on your computer.
 6. Find 300 guides that hit the largest number of reads
    ```shell
    optimize_guides input_sites_to_reads_filtered.txt 300 1 > guides.csv
    ```
-   :flashlight: You should experiment with different numbers of guides 
-   
+   :flashlight: You should experiment with different numbers of guides
+
    :flashlight: the `number of times to cover each read` option, here set to 1, is how many guides need to hit a read in `input.fasta` before that read is considered covered. In principle you could use this for additional redundancy, but in practice we've never needed anything other than 1
 7. Examine `guides.csv` to see how we did. Open this file in Excel and plot the last column. This plot will show the cumulative number of reads hit in `input.fasta` the designed guides hit. You can use this plot to pick the number of guides to use: look for the "elbow" in the plot, and notice where diminishing returns on the number of guides kicks in.
    ![](./elbow.png)
@@ -85,7 +85,7 @@ For even more detail, please see the `DASHit` paper ([2](#dashit)).
    ```
    :flashlight: `score_guides` is mainly useful to estimate how an existing guide set would perform against a new set of samples. You might not have to design new guides!
 
-**OUTPUT:** `guides.csv`, your DASH guides! 
+**OUTPUT:** `guides.csv`, your DASH guides!
 
 :flashlight: The [contrib](https://github.com/czbiohub/dashit/tree/master/contrib) directory contains many useful scripts for automating parts of this workflow. For instance, [these scripts](https://github.com/czbiohub/dashit/tree/master/contrib/convert_guide_csv_scripts) will convert your `guides.csv` into a spreadsheet ready to place an order.
 
