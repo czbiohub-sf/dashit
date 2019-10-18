@@ -10,6 +10,10 @@ SPECIAL_OPS_DIR = special_ops_crispr_tools
 
 SEQTK := $(shell command -v seqtk 2> /dev/null)
 
+build-components: check-basic-deps setup-dashit-filter build-score-guides optimize_guides build-special-ops-crispr-tools 
+
+install-components: install-optimize-guides install-score-guides install-special-ops-crispr-tools
+
 get-vendor-deps:
 	rm -rf $(VENDOR_DIR)/$(SPECIAL_OPS_DIR)
 	git clone $(SPECIAL_OPS_REPO) $(VENDOR_DIR)/$(SPECIAL_OPS_DIR)
@@ -17,15 +21,13 @@ get-vendor-deps:
 	go get github.com/shenwei356/bio/seqio/fastx
 	go get github.com/shenwei356/xopen
 
-build-components: build-score-guides build-optimize-guides build-special-ops-crispr-tools install-special-ops-crispr-tools
-
 build-score-guides:
 	cd misc && go build -o score_guides
 
 install-score-guides:
 	install misc/score_guides $(PREFIX)/bin
 
-build-special-ops-crispr-tools:
+build-special-ops-crispr-tools: get-vendor-deps
 	cd $(VENDOR_DIR)/$(SPECIAL_OPS_DIR) && $(MAKE) 
 
 install-special-ops-crispr-tools:
@@ -34,19 +36,17 @@ install-special-ops-crispr-tools:
 check-basic-deps:
 	bash check_basic_deps.sh || exit 1
 
-install: check-basic-deps
+install: 
 	$(MAKE) install-components
 
-install-components: get-vendor-deps build-components install-dashit install-score-guides install-dashit-filter
-
-build-optimize-guides:
+optimize_guides: optimize_guides.go
 	go build -o optimize_guides
 
-install-dashit-filter:
+setup-dashit-filter:
 	pip3 install -r requirements.txt
 	python3 setup.py develop
 
-install-dashit: build-optimize-guides
+install-optimize-guides: optimize_guides
 	install optimize_guides $(PREFIX)/bin
 
 test:

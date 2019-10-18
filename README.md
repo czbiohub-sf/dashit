@@ -20,7 +20,7 @@ Installing `DASHit` requires
 3. `python3`
 4. *(Optional, but recommended)* [seqtk](https://github.com/lh3/seqtk) is a useful tool for manipulating FASTQ/A files. Once you compile `seqtk`, place it in your `PATH` (e.g., `install seqtk /usr/local/bin`)
 
-On macOS, the quickest way to install `go` and `python3` is via [homebrew](https://brew.sh/). Once homebrew is installed, you can run
+On **macOS**, the quickest way to install `go` and `python3` is via [homebrew](https://brew.sh/). Once homebrew is installed, you can run
 
 ```shell
 brew install python
@@ -29,6 +29,13 @@ brew install go
 xcode-select --install
 ```
 
+On **Linux**, [download and install go here](https://golang.org/dl/), and then install `g++` and `python3` via your distributions package manager. On Ubuntu, this is
+
+```shell
+sudo apt-get update
+sudo apt-get install build-essential
+sudo apt-get install python3-pip
+```
 	
 
 ### DASHit
@@ -39,7 +46,9 @@ git clone https://github.com/czbiohub/dashit
 cd dashit
 python3 -m venv ~/.virtualenvs/dashit
 source ~/.virtualenvs/dashit/bin/activate
-make install
+# Run the following two commands separately
+make
+sudo make install 
 ```
 
 By default this will install compiled binaries into
