@@ -10,7 +10,7 @@ SPECIAL_OPS_DIR = special_ops_crispr_tools
 
 SEQTK := $(shell command -v seqtk 2> /dev/null)
 
-build-components: check-basic-deps setup-dashit-filter build-score-guides optimize_guides build-special-ops-crispr-tools 
+build-components: check-basic-deps get-vendor-deps build-special-ops-crispr-tools setup-dashit-filter build-score-guides optimize_guides
 
 install-components: install-optimize-guides install-score-guides install-special-ops-crispr-tools
 
