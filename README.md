@@ -14,7 +14,7 @@ Please visit [http://dashit.czbiohub.org](http://dashit.czbiohub.org) for docume
 The fastest way to get started with `DASHit` is to run our Docker image. Assuming the sequence files you want to process are in `/home/user/data`, simply run the `DASHit` image
 
 ```shell
-docker run -it -v /Users/dynerman:/data czbiohub/dashit bash
+docker run -it -v /home/user/data:/data czbiohub/dashit bash
 ```
 
 Once you're in the container, navigate to the directory containing your sequence files and get started using `DASHit`!
