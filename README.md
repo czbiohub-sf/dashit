@@ -10,8 +10,27 @@ Made in SF with :hearts: and :microscope: by the [Biohub](https://www.czbiohub.o
 ## Documentation
 Please visit [http://dashit.czbiohub.org](http://dashit.czbiohub.org) for documentation and examples.
 
+## Running via Docker
+The fastest way to get started with `DASHit` is to run our Docker image. Assuming the sequence files you want to process are in `/home/user/data`, simply run the `DASHit` image
+
+```shell
+docker run -it -v /Users/dynerman:/data czbiohub/dashit bash
+```
+
+Once you're in the container, navigate to the directory containing your sequence files and get started using `DASHit`!
+
+```shell
+cd /data
+crispr_sites ...
+```
+
+See [http://dashit.czbiohub.org](http://dashit.czbiohub.org) for complete documentation and examples of guide design.
+
 ## Installation
-`DASHit` runs on Linux and macOS. 
+If you're already running `DASHit` via Docker you're done! Visit [http://dashit.czbiohub.org](http://dashit.czbiohub.org) for examples showing how to run `DASHit`.
+
+If you don't want to run `DASHit` with Docker, here are instructions for installing from source. `DASHit` runs on Linux and macOS. 
+
 ### Dependencies
 Installing `DASHit` requires
 
